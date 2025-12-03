@@ -358,7 +358,7 @@
                     <!-- Sticky Footer inside Modal for Mobile -->
                     <div class="bg-slate-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:px-8 border-t border-slate-100 gap-3 sticky bottom-0 z-10">
                         <button type="button" class="inline-flex w-full justify-center rounded-xl bg-rgsu-700 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rgsu-600 sm:w-auto transition-all active:scale-95 items-center gap-2 badge-shine">
-                            Подать заявление
+                            Подробнее
                             <i data-lucide="arrow-right" class="w-4 h-4"></i>
                         </button>
                         <button type="button" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto transition-all" onclick="closeModal()">
@@ -642,7 +642,7 @@
                 
                 if (programs.length === 0) throw new Error("Empty sheet data");
 
-                showDataSource("Google Таблица");
+                showDataSource("");
 
             } catch (error) {
                 console.warn("Failed to load Google Sheet data, using fallback.", error);
@@ -658,8 +658,12 @@
             const indicator = document.getElementById('dataSourceIndicator');
             const text = document.getElementById('dataSourceText');
             if (indicator && text) {
-                indicator.classList.remove('hidden');
-                text.innerText = `Источник: ${sourceName}`;
+                if (sourceName) {
+                    indicator.classList.remove('hidden');
+                    text.innerText = `Источник: ${sourceName}`;
+                } else {
+                    indicator.classList.add('hidden');
+                }
             }
         }
 

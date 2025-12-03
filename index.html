@@ -217,16 +217,9 @@
                 
                 <!-- Action Buttons -->
                 <div class="mt-6 flex flex-wrap justify-center gap-4">
-                    <button onclick="openQuiz()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-medium backdrop-blur-sm transition border border-white/10 shadow-lg group">
-                        <i data-lucide="list-checks" class="w-4 h-4 text-blue-300"></i>
-                        Быстрый тест
-                    </button>
+
                     
-                    <!-- Gemini AI Button -->
-                    <button onclick="openAiModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-sm font-medium shadow-lg shadow-indigo-500/30 transition transform hover:scale-105 badge-shine border border-indigo-400/30">
-                        <i data-lucide="sparkles" class="w-4 h-4 text-yellow-300"></i>
-                        AI-Консультант
-                    </button>
+
                 </div>
             </div>
             
@@ -338,10 +331,9 @@
             </div>
         </div>
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-slate-800 text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© 2024 Российский Государственный Социальный Университет</p>
+            <p>© 2025 Российский Государственный Социальный Университет</p>
             <div class="flex gap-4">
-                <a href="#" class="hover:text-slate-300 transition">Политика конфиденциальности</a>
-                <a href="#" class="hover:text-slate-300 transition">Карта сайта</a>
+
             </div>
         </div>
     </footer>
@@ -432,66 +424,7 @@
         </div>
     </div>
 
-    <!-- AI Assistant Modal -->
-    <div id="aiModal" class="fixed inset-0 z-[100] hidden transition-opacity duration-300 opacity-0" aria-labelledby="ai-modal-title" role="dialog" aria-modal="true">
-        <div class="absolute inset-0 bg-rgsu-900/80 backdrop-blur-sm transition-opacity" onclick="closeAiModal()"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-indigo-600 flex flex-col max-h-[85vh]">
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-indigo-50 to-white p-6 border-b border-indigo-100 flex justify-between items-center shrink-0">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20">
-                        <i data-lucide="sparkles" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900">AI-Консультант</h3>
-                        <p class="text-xs text-slate-500 font-medium">Подбор программы на основе ваших интересов</p>
-                    </div>
-                </div>
-                <button onclick="closeAiModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-white transition">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
 
-            <!-- Content Area -->
-            <div class="flex-grow overflow-y-auto p-6 bg-slate-50/50" id="aiResultContainer">
-                <!-- Initial State -->
-                <div id="aiInitialState" class="text-center py-8">
-                    <div class="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 rotate-3">
-                        <i data-lucide="message-square-plus" class="w-8 h-8 text-indigo-400"></i>
-                    </div>
-                    <h4 class="text-lg font-semibold text-slate-800 mb-2">Опишите ваши пожелания</h4>
-                    <p class="text-slate-500 max-w-sm mx-auto text-sm">Например: "Мне нравится работать с компьютерами, но я также люблю общаться с людьми. У меня 11 классов образования."</p>
-                </div>
-
-                <!-- Loading State (Hidden) -->
-                <div id="aiLoadingState" class="hidden flex flex-col items-center justify-center py-12">
-                    <div class="relative w-16 h-16 mb-4">
-                        <div class="absolute inset-0 rounded-full border-4 border-indigo-100"></div>
-                        <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
-                        <i data-lucide="sparkles" class="w-6 h-6 text-indigo-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse"></i>
-                    </div>
-                    <p class="text-slate-600 font-medium animate-pulse">Анализирую программы...</p>
-                </div>
-
-                <!-- Result State (Hidden) -->
-                <div id="aiResponseContent" class="hidden prose prose-sm prose-slate max-w-none bg-white p-6 rounded-xl border border-indigo-100 shadow-sm"></div>
-            </div>
-
-            <!-- Input Area -->
-            <div class="p-4 border-t border-slate-200 bg-white shrink-0">
-                <div class="relative">
-                    <textarea id="aiInput" rows="2" placeholder="Расскажите о себе и своих интересах..." class="w-full pl-4 pr-14 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none text-sm font-medium placeholder:text-slate-400"></textarea>
-                    <button onclick="callGeminiAPI()" class="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" id="aiSendBtn">
-                        <i data-lucide="send-horizontal" class="w-4 h-4"></i>
-                    </button>
-                </div>
-                <p class="text-[10px] text-slate-400 mt-2 text-center flex items-center justify-center gap-1">
-                    <i data-lucide="zap" class="w-3 h-3"></i>
-                    Powered by Google Gemini
-                </p>
-            </div>
-        </div>
-    </div>
 
     <script>
         // Инициализация иконок
@@ -1172,7 +1105,7 @@
             } catch (error) {
                 console.error('Error calling Gemini API:', error);
                 aiLoadingState.classList.add('hidden');
-                aiResponseContent.innerHTML = `<p class="text-red-500">Произошла ошибка при связи с AI-консультантом. Пожалуйста, попробуйте позже.</p>`;
+                aiResponseContent.innerHTML = `<p class="text-red-500">Произошла ошибка. Пожалуйста, попробуйте позже.</p>`;
                 aiResponseContent.classList.remove('hidden');
             } finally {
                 aiInput.disabled = false;
@@ -1198,7 +1131,6 @@
             if (event.key === "Escape") {
                 closeModal();
                 closeQuiz();
-                closeAiModal();
             }
         });
     </script>

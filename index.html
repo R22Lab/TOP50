@@ -397,7 +397,7 @@
                 ).join('');
             }
 
-            // Restore UI state
+            // Restore UI state from loaded filters
             const searchInput = document.getElementById('searchInput');
             if(searchInput) searchInput.value = filters.search;
             
@@ -444,7 +444,7 @@
         }
 
         function updateFilters() {
-            // Read values
+            // Read values from inputs
             const searchInput = document.getElementById('searchInput');
             if(searchInput) filters.search = searchInput.value.toLowerCase();
             
@@ -457,7 +457,7 @@
             const sortSelect = document.getElementById('sortSelect');
             if(sortSelect) filters.sort = sortSelect.value;
             
-            // Sync UI
+            // Sync UI inputs if called programmatically
             const regionBtn = document.getElementById('clearRegionBtn');
             const regionIcon = document.getElementById('regionIcon');
             if (filters.region) { 
@@ -511,8 +511,8 @@
             const chipsDiv = document.getElementById('activeFilters');
             if(chipsDiv) {
                 let chipsHTML = '';
-                if (filters.region) chipsHTML += createChip(filters.region, () => { const ri = document.getElementById('regionInput'); if(ri) ri.value=''; updateFilters(); });
-                if (filters.budget) chipsHTML += createChip('Бюджет', () => { const bt = document.getElementById('budgetToggle'); if(bt) bt.checked=false; updateFilters(); });
+                if (filters.region) chipsHTML += createChip(filters.region, () => { document.getElementById('regionInput').value=''; updateFilters(); });
+                if (filters.budget) chipsHTML += createChip('Бюджет', () => { document.getElementById('budgetToggle').checked=false; updateFilters(); });
                 if (filters.search) chipsHTML += createChip(`Поиск: ${filters.search}`, () => { clearSearch(); });
                 chipsDiv.innerHTML = chipsHTML;
             }
@@ -623,6 +623,7 @@
         }
 
         function createChip(label, onClick) {
+            // Function string trick for inline HTML, cleaner would be createElement
             return `<button class="bg-rgsu-50 dark:bg-blue-900/30 text-rgsu-700 dark:text-blue-300 px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-rgsu-100 dark:hover:bg-blue-900/50 transition font-medium" onclick="(${onClick})()">
                 ${label} <i data-lucide="x" class="w-3 h-3"></i>
             </button>`;
@@ -657,6 +658,7 @@
             }
         }
 
+        // Animation: Fly Heart
         function flyToFav(startBtn) {
             const heart = startBtn.querySelector('svg').cloneNode(true);
             const startRect = startBtn.getBoundingClientRect();
@@ -673,6 +675,7 @@
             heart.style.pointerEvents = 'none';
             heart.classList.add('text-red-500', 'fill-red-500');
             
+            // Calculate vector
             const tx = targetRect.left - startRect.left;
             const ty = targetRect.top - startRect.top;
             

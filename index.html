@@ -47,9 +47,17 @@
         .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .dark .glass-panel { background: rgba(15, 23, 42, 0.95); border-color: rgba(255,255,255,0.1); }
 
-        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .card-hover:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 20px 25px -5px rgba(0, 44, 95, 0.15); }
-        .dark .card-hover:hover { box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5); border-color: #334155; }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid transparent; }
+        /* Gradient Border on Hover */
+        .card-hover:hover { 
+            transform: translateY(-6px) scale(1.01); 
+            box-shadow: 0 20px 25px -5px rgba(0, 44, 95, 0.15);
+            border-color: #3b82f6; 
+        }
+        .dark .card-hover:hover { 
+            box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5); 
+            border-color: #60a5fa; 
+        }
 
         .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 0.5rem; }
         .dark .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); }
@@ -68,6 +76,10 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+
+        /* Badge Animation */
+        .badge-pop { animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-800 dark:text-slate-100 font-body transition-colors duration-300">
@@ -92,15 +104,17 @@
                 </button>
                 <button onclick="toggleFavFilter()" id="favFilterBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 hover:bg-red-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-all text-sm font-medium relative group active:scale-95">
                     <i data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125" id="navHeartIcon"></i> <span class="hidden sm:inline">Избранное</span>
+                    <!-- Favorites Badge -->
+                    <span id="favCountBadge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm hidden badge-pop">0</span>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Hero -->
-    <div class="bg-rgsu-900 dark:bg-slate-900 pt-32 pb-16 px-4 relative overflow-hidden text-center transition-colors duration-500">
-        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-rgsu-600/20 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4 animate-pulse-soft"></div>
-        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/4"></div>
+    <!-- Hero with Parallax -->
+    <div class="bg-rgsu-900 dark:bg-slate-900 pt-32 pb-16 px-4 relative overflow-hidden text-center transition-colors duration-500" id="heroSection">
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-rgsu-600/20 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4 animate-pulse-soft transition-transform duration-100 ease-out" id="heroBlob1"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/4 transition-transform duration-100 ease-out" id="heroBlob2"></div>
         
         <div class="relative z-10 max-w-4xl mx-auto animate-fade-in">
             <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Найди свою <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">профессию</span></h2>
@@ -191,11 +205,9 @@
             <div class="skeleton h-80 rounded-2xl"></div><div class="skeleton h-80 rounded-2xl"></div><div class="skeleton h-80 rounded-2xl"></div>
         </div>
 
-        <!-- Load More -->
-        <div class="mt-12 text-center pb-8">
-            <button id="loadMoreBtn" onclick="loadMore()" class="hidden px-8 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-rgsu-200 hover:text-rgsu-700 transition shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
-                <span>Загрузить еще</span>
-            </button>
+        <!-- Load More / Infinite Scroll Sentinel -->
+        <div id="sentinel" class="mt-8 h-10 w-full flex items-center justify-center">
+             <svg class="animate-spin h-6 w-6 text-slate-400 hidden" id="loadingSpinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         </div>
     </main>
 
@@ -293,9 +305,28 @@
         // === INITIALIZATION ===
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
+            
+            // IMPROVEMENT 3: View Persistence
+            const savedView = localStorage.getItem('rgsu_view_mode');
+            if(savedView === 'compact') isCompactMode = true;
+            toggleCompactMode(false); // Apply without render initially
+
             readURL(); // Load filters from URL
             loadData();
+            updateFavBadge(); // Set initial badge
             
+            // Hero Parallax
+            document.addEventListener('mousemove', (e) => {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                
+                const blob1 = document.getElementById('heroBlob1');
+                const blob2 = document.getElementById('heroBlob2');
+                
+                if(blob1) blob1.style.transform = `translate(${x * 30}px, ${y * 30}px) scale(1.1)`;
+                if(blob2) blob2.style.transform = `translate(-${x * 30}px, -${y * 30}px) scale(1.1)`;
+            });
+
             if (window.location.hash.startsWith('#program=')) {
                 const id = parseInt(window.location.hash.split('=')[1]);
                 if (!isNaN(id)) setTimeout(() => openModal(id), 500);
@@ -307,6 +338,16 @@
                 if (window.scrollY > 400) btn.classList.remove('hidden', 'translate-y-10', 'opacity-0');
                 else btn.classList.add('translate-y-10', 'opacity-0');
             });
+
+            // IMPROVEMENT 1: Infinite Scroll
+            const observer = new IntersectionObserver((entries) => {
+                if(entries[0].isIntersecting) {
+                    loadMore();
+                }
+            }, { rootMargin: '100px' });
+            
+            const sentinel = document.getElementById('sentinel');
+            if(sentinel) observer.observe(sentinel);
         });
 
         document.getElementById('searchInput').addEventListener('input', (e) => { 
@@ -448,7 +489,11 @@
             if(filters.sort !== 'default') params.set('sort', filters.sort);
             
             const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}${window.location.hash}`;
-            window.history.replaceState({}, '', newUrl);
+            try {
+                window.history.replaceState({}, '', newUrl);
+            } catch (e) {
+                console.warn('URL update blocked:', e);
+            }
         }
 
         function readURL() {
@@ -545,7 +590,7 @@
 
             // Render Grid
             const grid = document.getElementById('catalogGrid');
-            const loadMoreBtn = document.getElementById('loadMoreBtn');
+            const spinner = document.getElementById('loadingSpinner');
             
             if(!grid) return;
 
@@ -563,7 +608,7 @@
                         <button onclick="clearSearch(); document.getElementById('regionInput').value=''; updateFilters()" class="px-6 py-3 bg-rgsu-900 text-white rounded-xl font-bold shadow-lg hover:bg-rgsu-800 transition active:scale-95">Сбросить все фильтры</button>
                     </div>
                 `;
-                if(loadMoreBtn) loadMoreBtn.classList.add('hidden');
+                if(spinner) spinner.classList.add('hidden');
                 lucide.createIcons();
                 return;
             }
@@ -636,12 +681,11 @@
 
             grid.innerHTML = gridHTML;
 
-            if(loadMoreBtn) {
+            if(spinner) {
                 if (visibleCount >= filteredPrograms.length) {
-                    loadMoreBtn.classList.add('hidden');
+                    spinner.classList.add('hidden');
                 } else {
-                    loadMoreBtn.classList.remove('hidden');
-                    loadMoreBtn.innerHTML = `<span>Загрузить еще (${filteredPrograms.length - visibleCount})</span> <i data-lucide="arrow-down" class="w-4 h-4"></i>`;
+                    spinner.classList.remove('hidden');
                 }
             }
             
@@ -656,14 +700,22 @@
         }
 
         function loadMore() {
-            const btn = document.getElementById('loadMoreBtn');
-            if(btn) {
-                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Загрузка...`;
-                setTimeout(() => { visibleCount += 21; renderUI(); }, 300);
-            }
+            if (visibleCount >= filteredPrograms.length) return;
+            visibleCount += 21;
+            renderUI();
         }
 
         // === ACTIONS ===
+        function updateFavBadge() {
+            const badge = document.getElementById('favCountBadge');
+            if (favorites.length > 0) {
+                badge.innerText = favorites.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
         function toggleFav(id, btn) {
             const index = favorites.indexOf(id);
             if (index === -1) {
@@ -675,6 +727,7 @@
                 showToast('Удалено из избранного', 'info');
             }
             localStorage.setItem('rgsu_favs', JSON.stringify(favorites));
+            updateFavBadge();
             
             if (showFavorites) { applyFilters(); } 
             else {
@@ -776,14 +829,18 @@
             return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-500/50 dark:text-white text-slate-900 rounded-sm px-0.5">$1</mark>');
         }
 
-        function toggleCompactMode() {
-            isCompactMode = !isCompactMode;
+        function toggleCompactMode(render = true) {
+            if (render) isCompactMode = !isCompactMode; // Toggle only if triggered manually
+            
+            // Save to LocalStorage
+            localStorage.setItem('rgsu_view_mode', isCompactMode ? 'compact' : 'full');
+
             const btn = document.getElementById('compactToggleBtn');
             if(btn) {
                 if (isCompactMode) btn.classList.add('text-rgsu-700', 'bg-slate-100', 'dark:bg-slate-700', 'dark:text-white');
                 else btn.classList.remove('text-rgsu-700', 'bg-slate-100', 'dark:bg-slate-700', 'dark:text-white');
             }
-            renderUI();
+            if(render) renderUI();
         }
 
         function getCatColor(cat) {

@@ -4,1139 +4,379 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>РГСУ | Портал образовательных программ</title>
-    <meta name="description" content="Единый каталог образовательных программ для ресоциализации и обучения">
+    <meta name="description" content="Единый каталог образовательных программ">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Markdown Parser for AI responses -->
+    
+    <!-- Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <!-- CSV Parser (PapaParse) for robust Google Sheets parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Manrope', 'sans-serif'],
-                        body: ['Inter', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Manrope', 'sans-serif'], body: ['Inter', 'sans-serif'] },
                     colors: {
-                        rgsu: { 
-                            900: '#002C5F', 
-                            800: '#004080',
-                            700: '#0054A6', 
-                            600: '#1A6BC2', 
-                            50: '#EAF4FF'
-                        },
-                        accent: {
-                            DEFAULT: '#F2994A',
-                            hover: '#E68A3E'
-                        },
-                        surface: '#F8FAFC'
+                        rgsu: { 900: '#002C5F', 800: '#004080', 700: '#0054A6', 600: '#1A6BC2', 50: '#EAF4FF' },
+                        accent: { DEFAULT: '#F2994A', hover: '#E68A3E' }
                     },
-                    boxShadow: {
-                        'soft': '0 4px 20px -2px rgba(0, 44, 95, 0.08)',
-                        'glow': '0 0 15px rgba(0, 84, 166, 0.3)',
-                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-up': 'slideUp 0.4s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        slideUp: {
-                            '0%': { transform: 'translateY(20px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' },
-                        }
-                    }
+                    animation: { 'fade-in': 'fadeIn 0.5s ease-out', 'bounce-slow': 'bounce 3s infinite' },
+                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
                 }
             }
         }
     </script>
     <style>
         body { background-color: #F8FAFC; }
-        
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
-        .card-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .card-hover:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 20px 25px -5px rgba(0, 84, 166, 0.15), 0 10px 10px -5px rgba(0, 84, 166, 0.1);
-            border-color: #0054A6;
-        }
-
-        /* Skeleton Loading Animation */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 0.5rem;
-        }
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .badge-shine {
-            position: relative;
-            overflow: hidden;
-        }
-        .badge-shine::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.6), transparent);
-            transform: skewX(-20deg);
-            animation: shine 3s infinite;
-        }
-        @keyframes shine {
-            0% { left: -100%; }
-            20% { left: 200%; }
-            100% { left: 200%; }
-        }
-
-        /* Custom Select Arrow */
-        select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-        }
-        
-        /* Quiz Styles */
-        .quiz-option:hover {
-            border-color: #0054A6;
-            background-color: #EAF4FF;
-        }
-        .quiz-option.selected {
-            border-color: #0054A6;
-            background-color: #0054A6;
-            color: white;
-        }
-
-        /* Markdown Styles for AI Response */
-        .prose h3 { font-size: 1.1rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.5rem; color: #002C5F; }
-        .prose ul { list-style-type: disc; padding-left: 1.2rem; margin-bottom: 1rem; }
-        .prose p { margin-bottom: 0.8rem; line-height: 1.6; }
-        .prose strong { color: #0054A6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -5px rgba(0, 84, 166, 0.15); border-color: #0054A6; }
+        /* Skeleton */
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 0.5rem; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="flex flex-col min-h-screen text-slate-800">
 
-    <!-- Navbar with Glassmorphism -->
-    <header class="fixed w-full top-0 z-50 glass-panel border-b border-slate-200/80 shadow-sm transition-all duration-300" id="navbar">
+    <!-- Navbar -->
+    <header class="fixed w-full top-0 z-50 glass-panel border-b border-slate-200/80 shadow-sm" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
             <a href="https://www.rgsu.net" class="flex items-center gap-5">
-                <!-- Логотип РГСУ из промпта -->
-                <img src="https://upload.wikimedia.org/wikipedia/ru/archive/4/42/20240520114700%21%D0%A0%D0%93%D0%A1%D0%A3_%D0%BB%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF.png" alt="Логотип РГСУ" class="h-12 w-auto object-contain hover:opacity-90 transition-opacity">
-                
-                <div class="hidden md:block border-l-2 border-rgsu-200 pl-5 h-10 flex flex-col justify-center">
-                    <h1 class="font-bold text-rgsu-900 text-sm leading-tight uppercase tracking-wide">РГСУ</h1>
-                    <p class="text-xs text-slate-500 font-medium">Центр ресоциализации</p>
+                <img src="https://upload.wikimedia.org/wikipedia/ru/archive/4/42/20240520114700%21%D0%A0%D0%93%D0%A1%D0%A3_%D0%BB%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF.png" alt="Логотип" class="h-12 w-auto">
+                <div class="hidden md:block border-l-2 border-rgsu-200 pl-5">
+                    <h1 class="font-bold text-rgsu-900 text-sm uppercase">РГСУ</h1>
+                    <p class="text-xs text-slate-500 font-medium">Образовательный портал</p>
                 </div>
             </a>
-            
-            <div class="flex items-center gap-3">
-                <a href="tel:+74952556767" class="hidden lg:flex flex-col text-right mr-2 group">
-                    <span class="text-[10px] uppercase text-slate-400 font-bold tracking-wider group-hover:text-rgsu-600 transition-colors">Горячая линия</span>
-                    <span class="font-bold text-rgsu-900 text-lg leading-none">+7 (495) 255-67-67</span>
-                </a>
-
+            <div class="flex items-center gap-4">
+                <a href="tel:+74952556767" class="hidden lg:block font-bold text-rgsu-900">+7 (495) 255-67-67</a>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <div class="bg-rgsu-900 pt-36 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <!-- Decorative Elements -->
-        <div class="absolute top-0 right-0 w-[800px] h-[800px] bg-rgsu-600/20 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4 animate-pulse-slow"></div>
-        <div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/4"></div>
+    <!-- Hero -->
+    <div class="bg-rgsu-900 pt-36 pb-20 px-4 relative overflow-hidden text-center">
+        <div class="absolute top-0 right-0 w-[800px] h-[800px] bg-rgsu-600/20 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4"></div>
         
-        <!-- Content -->
-        <div class="max-w-4xl mx-auto text-center relative z-10 animate-slide-up">
-
+        <div class="relative z-10 max-w-4xl mx-auto animate-fade-in">
+            <h2 class="text-4xl md:text-6xl font-extrabold text-white mb-6">Образование для <span class="text-blue-200">будущего</span></h2>
+            <p class="text-slate-300 mb-10 text-lg">Единый реестр программ переподготовки и высшего образования.</p>
             
-            <h2 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-tight">
-                Образование для<br>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200">Вашего будущего</span>
-            </h2>
-            
-            <p class="text-slate-300 mb-10 max-w-2xl mx-auto text-lg font-body leading-relaxed">
-                Единый реестр государственных программ переподготовки и высшего образования. 
-                <span class="text-white font-medium">Бюджетные места</span>, специальные квоты и приоритетное зачисление для участников СВО.
-            </p>
-            
-            <!-- Search Box -->
-            <div class="relative max-w-2xl mx-auto transform transition-transform duration-300 z-20">
-                <div class="absolute inset-0 bg-accent/20 blur-xl rounded-full"></div>
-                <div class="relative flex flex-col sm:flex-row bg-white rounded-2xl shadow-2xl overflow-hidden p-1.5 gap-2">
-                    <div class="relative flex-grow flex items-center">
-                        <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-4"></i>
-                        <input type="text" id="searchInput" 
-                            placeholder="Найти профессию, вуз или код (09.03.01)..." 
-                            class="w-full pl-12 pr-4 py-3 text-base text-slate-900 placeholder-slate-400 focus:outline-none h-full bg-transparent">
-                    </div>
-                    <button onclick="filterData()" class="bg-accent hover:bg-accent-hover text-white font-bold px-8 py-3 rounded-xl transition-colors duration-300 flex items-center justify-center gap-2 w-full sm:w-auto">
-                        Найти
-                    </button>
+            <div class="relative max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-1.5 flex flex-col sm:flex-row gap-2">
+                <div class="flex-grow flex items-center px-4">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
+                    <input type="text" id="searchInput" placeholder="Поиск по профессии, коду или вузу..." class="w-full pl-3 py-3 outline-none bg-transparent">
                 </div>
-                
-                <!-- Action Buttons -->
-                <div class="mt-6 flex flex-wrap justify-center gap-4">
-
-                    
-
-                </div>
+                <button onclick="filterData()" class="bg-accent hover:bg-accent-hover text-white font-bold px-8 py-3 rounded-xl transition-colors">Найти</button>
             </div>
-            
-            <!-- Smart Filters -->
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8 text-sm text-slate-300">
-                <span class="hidden sm:inline opacity-60">Популярные фильтры:</span>
-                <div class="flex gap-2">
-                    <button onclick="setFilter('IT')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition hover:text-white cursor-pointer">💻 IT и Цифра</button>
-                    <button onclick="setFilter('БПЛА')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition hover:text-white cursor-pointer">✈️ БПЛА</button>
-                    <button onclick="setFilter('Социальная')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition hover:text-white cursor-pointer">🤝 Соц. работа</button>
-                </div>
+
+            <!-- Dynamic Popular Filters -->
+            <div id="popularFilters" class="flex flex-wrap justify-center gap-3 mt-8 text-sm">
+                <!-- JS will inject buttons here -->
+                <div class="skeleton w-24 h-8 bg-white/10"></div>
+                <div class="skeleton w-24 h-8 bg-white/10"></div>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 pb-20 relative z-20 flex-grow w-full">
-        
-        <!-- Controls Bar -->
-        <div class="bg-white rounded-2xl shadow-soft border border-slate-100 p-4 mb-8 flex flex-col xl:flex-row justify-between items-center gap-4 animate-fade-in">
-            
-            <!-- Left Side: Level & District -->
+    <!-- Main -->
+    <main class="max-w-7xl mx-auto px-4 -mt-10 pb-20 relative z-20 flex-grow w-full">
+        <!-- Controls -->
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 p-4 mb-8 flex flex-col xl:flex-row justify-between gap-4">
             <div class="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-                <!-- Level Toggles -->
-                <div class="flex p-1 bg-slate-100 rounded-xl w-full md:w-auto">
-                    <button onclick="filterByLevel('all')" id="btn-all" class="level-btn flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold transition-all shadow-sm bg-white text-rgsu-900">Все</button>
-                    <button onclick="filterByLevel('VO')" id="btn-vo" class="level-btn flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-rgsu-900 transition-all">ВУЗ</button>
-                    <button onclick="filterByLevel('SPO')" id="btn-spo" class="level-btn flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-semibold text-slate-500 hover:text-rgsu-900 transition-all">Колледж</button>
+                <!-- Dynamic Level Buttons -->
+                <div id="levelButtons" class="flex p-1 bg-slate-100 rounded-xl w-full md:w-auto overflow-x-auto">
+                    <!-- JS Injected -->
                 </div>
-
-                <!-- District Dropdown -->
-                <div class="relative w-full md:w-64">
-                    <select id="districtFilter" onchange="filterData()" class="w-full appearance-none bg-slate-50 border border-slate-200 text-slate-700 py-2.5 pl-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-rgsu-600/20 focus:border-rgsu-600 text-sm font-medium transition-all cursor-pointer hover:bg-slate-100">
-                        <option value="all">Все Федеральные округа</option>
-                        <option value="ЦФО">Центральный (ЦФО)</option>
-                        <option value="СЗФО">Северо-Западный (СЗФО)</option>
-                        <option value="ЮФО">Южный (ЮФО)</option>
-                        <option value="СКФО">Северо-Кавказский (СКФО)</option>
-                        <option value="ПФО">Приволжский (ПФО)</option>
-                        <option value="УФО">Уральский (УФО)</option>
-                        <option value="СФО">Сибирский (СФО)</option>
-                        <option value="ДФО">Дальневосточный (ДФО)</option>
-                    </select>
-                </div>
+                <!-- Dynamic Regions -->
+                <select id="districtFilter" onchange="filterData()" class="w-full md:w-64 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none cursor-pointer">
+                    <option value="all">Все регионы</option>
+                </select>
             </div>
-
-            <!-- Right Side: Result Stats & Budget Toggle -->
-            <div class="flex items-center gap-6 w-full xl:w-auto justify-between xl:justify-end border-t xl:border-t-0 border-slate-100 pt-4 xl:pt-0">
-                <h3 class="text-sm font-semibold text-slate-600" id="resultsCount">Найдено: <span class="text-rgsu-700">...</span></h3>
-                
-                <label class="flex items-center gap-2 cursor-pointer group">
-                    <div class="relative">
-                        <input type="checkbox" id="budgetToggle" checked class="peer sr-only" onchange="filterData()">
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rgsu-600"></div>
-                    </div>
-                    <span class="text-sm font-medium text-slate-600 group-hover:text-rgsu-700 transition-colors">Только бюджет</span>
+            
+            <div class="flex items-center justify-between gap-6 w-full xl:w-auto border-t xl:border-none pt-4 xl:pt-0">
+                <h3 class="text-sm font-semibold text-slate-600" id="resultsCount">Загрузка...</h3>
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" id="budgetToggle" checked class="peer sr-only" onchange="filterData()">
+                    <div class="w-11 h-6 bg-slate-200 rounded-full peer-checked:bg-rgsu-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all relative"></div>
+                    <span class="text-sm font-medium text-slate-600">Бюджет</span>
                 </label>
             </div>
         </div>
 
         <!-- Grid -->
         <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Skeleton Loaders will be here initially -->
-            <div class="skeleton h-96"></div>
-            <div class="skeleton h-96"></div>
-            <div class="skeleton h-96"></div>
-        </div>
-
-        <!-- Data Source Indicator -->
-        <div id="dataSourceIndicator" class="mt-6 text-center text-xs text-slate-400 flex items-center justify-center gap-2 hidden">
-            <i data-lucide="database" class="w-3 h-3"></i>
-            <span id="dataSourceText">Данные загружены</span>
+            <div class="skeleton h-96"></div><div class="skeleton h-96"></div><div class="skeleton h-96"></div>
         </div>
     </main>
     
     <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-300 py-16 border-t border-slate-800 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
-            <div class="col-span-1 md:col-span-2">
-                <div class="flex items-center gap-3 mb-6">
-                     <img src="https://upload.wikimedia.org/wikipedia/ru/archive/4/42/20240520114700%21%D0%A0%D0%93%D0%A1%D0%A3_%D0%BB%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF.png" alt="Логотип РГСУ" class="h-10 w-auto">
-                     <div class="flex flex-col">
-                        <span class="font-bold text-white uppercase tracking-wider">РГСУ</span>
-                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">Официальный портал</span>
-                     </div>
-                </div>
-                <p class="text-slate-400 text-sm max-w-sm leading-relaxed">
-                    Единая база образовательных программ для участников СВО и членов их семей. 
-                    Разработано в рамках реализации государственной программы поддержки.
-                </p>
-            </div>
-
-            <div>
-                <h4 class="font-bold text-white mb-6 tracking-wide text-sm uppercase">Контакты</h4>
-                <ul class="space-y-4 text-sm">
-                    <li class="flex items-start gap-3">
-                        <i data-lucide="map-pin" class="w-5 h-5 text-rgsu-600 shrink-0"></i>
-                        <span>Москва, ул. Вильгельма Пика, д. 4, стр. 1</span>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <i data-lucide="mail" class="w-5 h-5 text-rgsu-600 shrink-0"></i>
-                        <a href="mailto:info@rgsu.net" class="hover:text-white transition-colors">info@rgsu.net</a>
-                    </li>
-                    <li class="flex items-center gap-3">
-                        <i data-lucide="phone" class="w-5 h-5 text-rgsu-600 shrink-0"></i>
-                        <a href="tel:+74952556767" class="font-semibold hover:text-white transition-colors">+7 (495) 255-67-67</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-slate-800 text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© 2025 Российский Государственный Социальный Университет</p>
-            <div class="flex gap-4">
-
+    <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 mt-auto text-sm">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+            <p>© 2025 РГСУ. Официальный портал.</p>
+            <div class="flex gap-6">
+                <a href="mailto:info@rgsu.net" class="hover:text-white">info@rgsu.net</a>
+                <a href="tel:+74952556767" class="hover:text-white">+7 (495) 255-67-67</a>
             </div>
         </div>
     </footer>
 
-    <!-- Details Modal -->
-    <div id="modal" class="fixed inset-0 z-[100] hidden transition-opacity duration-300 opacity-0" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] hidden" role="dialog">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-        
-        <div class="fixed inset-0 z-10 overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border-t-4 border-rgsu-700 scale-95 opacity-0 transition-all duration-300" id="modalPanel">
-                    
-                    <!-- Close Button -->
-                    <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full bg-slate-50 text-slate-400 hover:text-rgsu-700 hover:bg-slate-100 transition z-20">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-
-                    <div id="modalContent" class="max-h-[80vh] overflow-y-auto custom-scrollbar">
-                        <!-- Dynamic Content -->
-                    </div>
-
-                    <!-- Sticky Footer inside Modal for Mobile -->
-                    <div class="bg-slate-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:px-8 border-t border-slate-100 gap-3 sticky bottom-0 z-10">
-                        <button type="button" class="inline-flex w-full justify-center rounded-xl bg-rgsu-700 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-rgsu-600 sm:w-auto transition-all active:scale-95 items-center gap-2 badge-shine">
-                            Подробнее
-                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                        </button>
-                        <button type="button" class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto transition-all" onclick="closeModal()">
-                            Закрыть
-                        </button>
-                    </div>
-                </div>
+        <div class="fixed inset-0 z-10 overflow-y-auto p-4 flex items-center justify-center">
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full border-t-4 border-rgsu-700 transform transition-all scale-95 opacity-0" id="modalPanel">
+                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div id="modalContent" class="p-6 max-h-[80vh] overflow-y-auto"></div>
             </div>
         </div>
     </div>
 
-    <!-- QUIZ Modal -->
-    <div id="quizModal" class="fixed inset-0 z-[100] hidden transition-opacity duration-300 opacity-0" aria-labelledby="quiz-modal-title" role="dialog" aria-modal="true">
-        <div class="absolute inset-0 bg-rgsu-900/80 backdrop-blur-sm transition-opacity" onclick="closeQuiz()"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-accent">
-            <div class="p-6 sm:p-8">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-2xl font-bold text-rgsu-900">Подбор программы</h3>
-                    <button onclick="closeQuiz()" class="text-slate-400 hover:text-slate-600">
-                        <i data-lucide="x" class="w-6 h-6"></i>
-                    </button>
-                </div>
+    <!-- AI Button -->
+    <button onclick="openAiModal()" class="fixed bottom-6 right-6 z-[90] bg-rgsu-700 text-white p-4 rounded-full shadow-lg hover:scale-105 transition-all animate-bounce-slow flex items-center justify-center group">
+        <i data-lucide="bot" class="w-7 h-7"></i>
+    </button>
 
-                <!-- Quiz Step 1 -->
-                <div id="quizStep1" class="transition-all duration-300">
-                    <p class="text-slate-600 mb-6 text-lg">Что вам интереснее всего?</p>
-                    <div class="grid grid-cols-1 gap-3">
-                        <button onclick="selectInterest('IT')" class="quiz-option flex items-center gap-4 p-4 rounded-xl border border-slate-200 text-left hover:border-rgsu-600 hover:bg-slate-50 transition-all group">
-                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                <i data-lucide="monitor" class="w-5 h-5"></i>
-                            </div>
-                            <span class="font-semibold text-slate-700 group-hover:text-rgsu-900">IT и Технологии</span>
-                        </button>
-                        <button onclick="selectInterest('People')" class="quiz-option flex items-center gap-4 p-4 rounded-xl border border-slate-200 text-left hover:border-rgsu-600 hover:bg-slate-50 transition-all group">
-                            <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
-                                <i data-lucide="users" class="w-5 h-5"></i>
-                            </div>
-                            <span class="font-semibold text-slate-700 group-hover:text-rgsu-900">Помощь людям</span>
-                        </button>
-                         <button onclick="selectInterest('Tech')" class="quiz-option flex items-center gap-4 p-4 rounded-xl border border-slate-200 text-left hover:border-rgsu-600 hover:bg-slate-50 transition-all group">
-                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 group-hover:bg-slate-600 group-hover:text-white transition-colors">
-                                <i data-lucide="wrench" class="w-5 h-5"></i>
-                            </div>
-                            <span class="font-semibold text-slate-700 group-hover:text-rgsu-900">Техника и Производство</span>
-                        </button>
-                    </div>
+    <!-- AI Modal -->
+    <div id="aiModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeAiModal()"></div>
+        <div class="absolute bottom-0 sm:bottom-auto sm:top-1/2 left-1/2 transform -translate-x-1/2 sm:-translate-y-1/2 w-full sm:w-[600px] h-[80vh] sm:h-[600px] bg-white sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col">
+            <div class="p-4 border-b flex justify-between bg-slate-50 rounded-t-2xl">
+                <h3 class="font-bold">AI-Консультант</h3>
+                <button onclick="closeAiModal()"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-grow overflow-y-auto p-6 bg-slate-50/50" id="aiResultContainer">
+                <div id="aiInitialState" class="text-center opacity-80 mt-20">
+                    <i data-lucide="message-square" class="w-12 h-12 mx-auto text-slate-300 mb-4"></i>
+                    <p>Опишите желаемую профессию...</p>
                 </div>
-
-                <!-- Quiz Step 2 -->
-                <div id="quizStep2" class="hidden transition-all duration-300">
-                    <button onclick="prevStep()" class="text-sm text-slate-400 hover:text-rgsu-700 mb-4 flex items-center gap-1"><i data-lucide="arrow-left" class="w-3 h-3"></i> Назад</button>
-                    <p class="text-slate-600 mb-6 text-lg">Ваше базовое образование?</p>
-                    <div class="grid grid-cols-1 gap-3">
-                        <button onclick="selectEdu('9')" class="quiz-option p-4 rounded-xl border border-slate-200 text-left hover:border-rgsu-600 hover:bg-slate-50 transition-all font-semibold text-slate-700">
-                            9 классов (Основное общее)
-                        </button>
-                        <button onclick="selectEdu('11')" class="quiz-option p-4 rounded-xl border border-slate-200 text-left hover:border-rgsu-600 hover:bg-slate-50 transition-all font-semibold text-slate-700">
-                            11 классов (Среднее общее) / СПО
-                        </button>
-                    </div>
-                </div>
+                <div id="aiResponseContent" class="hidden prose prose-sm text-slate-700"></div>
+            </div>
+            <div class="p-4 border-t relative">
+                <input type="text" id="aiInput" class="w-full border rounded-xl pl-4 pr-12 py-3" placeholder="Спросить AI...">
+                <button onclick="callGeminiAPI()" class="absolute right-6 top-6 text-blue-600"><i data-lucide="send" class="w-5 h-5"></i></button>
             </div>
         </div>
     </div>
-
-
 
     <script>
-        // Инициализация иконок
         lucide.createIcons();
-
-        // === ДАННЫЕ ===
-        // Хардкод данные (резервные)
-        const fallbackPrograms = [
-            {
-                id: 1,
-                title: "Разработчик веб и мультимедиа",
-                fgos_code: "09.02.07",
-                fgos_name: "Информационные системы и программирование",
-                institution: "РГСУ",
-                district: "ЦФО",
-                level: "SPO",
-                level_readable: "Колледж",
-                base: "9 классов",
-                duration: "3 г. 10 мес.",
-                category: "IT и цифра",
-                tags: ["Бюджет", "IT", "Топ-50"],
-                places: 25,
-                salary: "от 80 000 ₽",
-                desc: "Полный цикл создания веб-приложений: от верстки до backend-разработки. Обучение на современном стеке (React, Node.js, Python). Доступны лаборатории технопарка.",
-                color: "blue",
-                quiz_cat: "IT"
-            },
-            {
-                id: 2,
-                title: "Социальный координатор",
-                fgos_code: "39.02.01",
-                fgos_name: "Социальная работа",
-                institution: "РГСУ",
-                district: "ЦФО",
-                level: "SPO",
-                level_readable: "Колледж",
-                base: "9 классов",
-                duration: "2 г. 10 мес.",
-                category: "Социальная сфера",
-                tags: ["Бюджет", "Фонд Защитники Отечества"],
-                places: 45,
-                salary: "от 55 000 ₽",
-                desc: "Ключевое направление для поддержки участников СВО. Организация социальной поддержки, работа с льготами, реабилитация. Гарантированная практика.",
-                color: "orange",
-                quiz_cat: "People"
-            },
-            {
-                id: 3,
-                title: "Клиническая психология (Реабилитация)",
-                fgos_code: "37.03.01",
-                fgos_name: "Психология",
-                institution: "РГСУ",
-                district: "ЦФО",
-                level: "VO",
-                level_readable: "Бакалавриат",
-                base: "11 классов",
-                duration: "4 года",
-                category: "Психология",
-                tags: ["Квота 10%", "ПТСР", "Общежитие"],
-                places: 15,
-                salary: "от 70 000 ₽",
-                desc: "Специализированная программа по работе с посттравматическими расстройствами. Работа в реабилитационных центрах и госпиталях.",
-                color: "purple",
-                quiz_cat: "People"
-            },
-            {
-                id: 4,
-                title: "Кибербезопасность автоматизированных систем",
-                fgos_code: "10.03.01",
-                fgos_name: "Информационная безопасность",
-                institution: "МГТУ им. Баумана",
-                district: "ЦФО",
-                level: "VO",
-                level_readable: "Бакалавриат",
-                base: "11 классов / ЕГЭ",
-                duration: "4 года",
-                category: "IT и цифра",
-                tags: ["Квота 10%", "Гриф 'Секретно'", "ВПК"],
-                places: 12,
-                salary: "от 110 000 ₽",
-                desc: "Защита критической инфраструктуры. Изучение криптографии, сетевой защиты и отражения кибератак. Трудоустройство в оборонный сектор.",
-                color: "blue",
-                quiz_cat: "IT"
-            },
-            {
-                id: 5,
-                title: "Оператор БПЛА (Беспилотные авиационные системы)",
-                fgos_code: "25.02.08",
-                fgos_name: "Эксплуатация БАС",
-                institution: "Технический колледж им. С.И. Мосина",
-                district: "ЦФО",
-                level: "SPO",
-                level_readable: "Колледж",
-                base: "9 классов",
-                duration: "3 г. 10 мес.",
-                category: "Транспорт",
-                tags: ["Бюджет", "БПЛА", "Новая профессия"],
-                places: 20,
-                salary: "от 120 000 ₽",
-                desc: "Пилотирование, техническое обслуживание и ремонт дронов гражданского и двойного назначения. Включает летную практику.",
-                color: "sky",
-                quiz_cat: "Tech"
-            },
-            {
-                id: 6,
-                title: "Проектирование технологических машин",
-                fgos_code: "15.03.01",
-                fgos_name: "Машиностроение",
-                institution: "МГТУ Станкин",
-                district: "ЦФО",
-                level: "VO",
-                level_readable: "Бакалавриат",
-                base: "11 классов",
-                duration: "4 года",
-                category: "Инженерия",
-                tags: ["ВПК", "Инженерия", "Квота"],
-                places: 30,
-                salary: "от 90 000 ₽",
-                desc: "Конструирование современного оборудования. Работа с CAD/CAM системами. Подготовка кадров для заводов ОПК.",
-                color: "slate",
-                quiz_cat: "Tech"
-            },
-            {
-                id: 7,
-                title: "Кораблестроение и океанотехника",
-                fgos_code: "26.03.02",
-                fgos_name: "Кораблестроение",
-                institution: "ДВФУ",
-                district: "ДФО",
-                level: "VO",
-                level_readable: "Бакалавриат",
-                base: "11 классов",
-                duration: "4 года",
-                category: "Инженерия",
-                tags: ["Квота", "Судостроение", "ДВ"],
-                places: 40,
-                salary: "от 100 000 ₽",
-                desc: "Проектирование судов и морской техники. Практика на верфи 'Звезда'. Высокий спрос на Дальнем Востоке.",
-                color: "indigo",
-                quiz_cat: "Tech"
-            },
-             {
-                id: 8,
-                title: "Металлургия черных металлов",
-                fgos_code: "22.03.02",
-                fgos_name: "Металлургия",
-                institution: "УрФУ",
-                district: "УФО",
-                level: "VO",
-                level_readable: "Бакалавриат",
-                base: "11 классов",
-                duration: "4 года",
-                category: "Производство",
-                tags: ["Бюджет", "Промышленность"],
-                places: 50,
-                salary: "от 85 000 ₽",
-                desc: "Технологии современного металлургического производства. Сотрудничество с УГМК и НТМК.",
-                color: "orange",
-                quiz_cat: "Tech"
-            }
-        ];
-        
-        let programs = []; // Main data array
-
-        // === ЛОГИКА ЗАГРУЗКИ ДАННЫХ ===
+        let programs = [];
+        let currentLevel = 'all';
         const SHEET_ID = '12GNjcomxxU4NbXKwQ1Jq_eG7M7PLUlDlKAnBO4qwu5g';
-        const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+        const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
+        // === CORE: LOAD & PROCESS DATA ===
         async function loadData() {
-            // Показываем скелетоны
-            const grid = document.getElementById('catalogGrid');
-            grid.innerHTML = `
-                <div class="skeleton h-96"></div>
-                <div class="skeleton h-96"></div>
-                <div class="skeleton h-96"></div>
-            `;
-
             try {
-                // Пробуем загрузить CSV
-                const response = await fetch(SHEET_CSV_URL);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const csvText = await response.text();
+                const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error('Err');
+                const text = await response.text();
+                const results = Papa.parse(text, { header: true, skipEmptyLines: true });
                 
-                // Парсим CSV
-                const results = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-                
-                // Маппинг данных из таблицы в структуру приложения
-                // Предполагаем, что в таблице есть определенные заголовки, но делаем фоллбек
-                programs = results.data.map((row, index) => {
-                    // Попытка умного маппинга (адаптируйте ключи под реальные заголовки таблицы)
-                    // Если в таблице заголовки на русском, используем их
+                // Optimized Mapping
+                programs = results.data.map((row, i) => {
+                    const budget = row['budget_seats'] || "";
+                    const hasBudget = budget.toLowerCase().includes('есть') || budget.toLowerCase().includes('мест');
+                    
                     return {
-                        id: index + 100, // offset ID
-                        title: row['Program_Name'] || row['Название'] || row['title'] || "Без названия",
-                        fgos_code: row['FGOS_Code'] || row['Код'] || "—",
-                        fgos_name: row['FGOS_Name'] || row['Специальность'] || "",
-                        institution: row['Institution_Name'] || row['ВУЗ'] || "Не указан",
-                        district: row['District'] || row['ФО'] || "РФ",
-                        level: (row['Level'] || row['Уровень'] || "").includes('СПО') ? 'SPO' : 'VO',
-                        level_readable: (row['Level'] || row['Уровень'] || "").includes('СПО') ? 'Колледж' : 'Бакалавриат',
-                        base: row['Base'] || row['База'] || "11 классов",
-                        duration: row['Duration'] || row['Срок'] || "4 года",
-                        category: row['Category'] || row['Категория'] || "Общее",
-                        tags: (row['Tags'] || row['Теги'] || "Бюджет").split(',').map(t => t.trim()),
-                        places: parseInt(row['Places'] || row['Места'] || 0),
-                        salary: row['Salary'] || row['Зарплата'] || "по итогам",
-                        desc: row['Description'] || row['Описание'] || "Описание программы загружается...",
-                        // Генерируем цвет на основе категории (просто для визуала)
-                        color: ['blue', 'green', 'orange', 'purple', 'indigo'][index % 5],
-                        quiz_cat: "Tech" // Default fallback
+                        id: i,
+                        title: row['program_name'] || "Без названия",
+                        code: (row['fgos_code'] || "").replace(/^\d{4}-\d{2}-\d{2}$/, "Код"), // Simple date fix
+                        inst: row['institution_name'] || "ВУЗ не указан",
+                        region: row['region'] || "РФ",
+                        level: normalizeLevel(row['education_level']),
+                        cat: row['macrogroup_name'] || "Общее",
+                        tags: [hasBudget ? "Бюджет" : "Платное", "2025"],
+                        places: budget,
+                        url: row['url'] || "#",
+                        desc: `${row['program_name']}. ${row['macrogroup_name']}.`
                     };
                 });
-
-                console.log("Loaded programs from Sheet:", programs.length);
                 
-                if (programs.length === 0) throw new Error("Empty sheet data");
-
-                showDataSource("");
-
-            } catch (error) {
-                console.warn("Failed to load Google Sheet data, using fallback.", error);
-                programs = fallbackPrograms;
-                showDataSource("Резервная база данных (Демо)");
-            } finally {
-                // Рендеринг
+                initFilters();
                 filterData();
+            } catch (e) {
+                document.getElementById('catalogGrid').innerHTML = `<div class="col-span-3 text-center py-20 text-red-500">Ошибка загрузки таблицы</div>`;
             }
         }
 
-        function showDataSource(sourceName) {
-            const indicator = document.getElementById('dataSourceIndicator');
-            const text = document.getElementById('dataSourceText');
-            if (indicator && text) {
-                if (sourceName) {
-                    indicator.classList.remove('hidden');
-                    text.innerText = `Источник: ${sourceName}`;
-                } else {
-                    indicator.classList.add('hidden');
-                }
-            }
+        function normalizeLevel(lvl) {
+            if (!lvl) return 'VO';
+            return lvl.toUpperCase().includes('СПО') ? 'SPO' : 'VO';
         }
 
+        // === DYNAMIC FILTERS GENERATION ===
+        function initFilters() {
+            // 1. Generate Levels
+            const levels = [...new Set(programs.map(p => p.level))].sort();
+            const levelContainer = document.getElementById('levelButtons');
+            let levelHTML = `<button onclick="setLevel('all')" id="lvl-all" class="px-6 py-2 rounded-lg text-sm font-semibold transition bg-white text-rgsu-900 shadow-sm whitespace-nowrap">Все</button>`;
+            
+            levels.forEach(l => {
+                const label = l === 'SPO' ? 'Колледж (СПО)' : 'ВУЗ (ВО)';
+                levelHTML += `<button onclick="setLevel('${l}')" id="lvl-${l}" class="px-6 py-2 rounded-lg text-sm font-semibold transition text-slate-500 hover:text-rgsu-900 whitespace-nowrap">${label}</button>`;
+            });
+            levelContainer.innerHTML = levelHTML;
 
-        // === ЛОГИКА ИНТЕРФЕЙСА ===
-        const grid = document.getElementById('catalogGrid');
-        const countLabel = document.getElementById('resultsCount');
-        const searchInput = document.getElementById('searchInput');
-        const budgetToggle = document.getElementById('budgetToggle');
-        const districtFilter = document.getElementById('districtFilter');
-        
-        // Элементы кнопок уровня
-        const btnAll = document.getElementById('btn-all');
-        const btnVo = document.getElementById('btn-vo');
-        const btnSpo = document.getElementById('btn-spo');
-        
-        let currentLevel = 'all';
+            // 2. Generate Regions
+            const regions = [...new Set(programs.map(p => p.region).filter(r => r && r !== "РФ"))].sort();
+            const regionSelect = document.getElementById('districtFilter');
+            regions.forEach(r => {
+                regionSelect.add(new Option(r, r));
+            });
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', loadData);
+            // 3. Generate Popular Categories (Top 4)
+            const cats = programs.map(p => p.cat);
+            const counts = {};
+            cats.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
+            const topCats = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 4);
+            
+            const popContainer = document.getElementById('popularFilters');
+            popContainer.innerHTML = `<span class="opacity-60 hidden sm:inline self-center">Популярное:</span>` + 
+                topCats.map(c => `<button onclick="setSearch('${c}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:text-white transition cursor-pointer">${c}</button>`).join('');
+        }
 
-        function setFilter(query) {
-            searchInput.value = query;
+        // === LOGIC ===
+        function setLevel(lvl) {
+            currentLevel = lvl;
+            document.querySelectorAll('#levelButtons button').forEach(b => {
+                b.className = b.id === `lvl-${lvl}` ? 
+                    "px-6 py-2 rounded-lg text-sm font-semibold transition bg-white text-rgsu-900 shadow-sm whitespace-nowrap" : 
+                    "px-6 py-2 rounded-lg text-sm font-semibold transition text-slate-500 hover:text-rgsu-900 whitespace-nowrap";
+            });
             filterData();
         }
 
-        function filterByLevel(level) {
-            currentLevel = level;
-            
-            // Обновляем стили кнопок
-            [btnAll, btnVo, btnSpo].forEach(btn => {
-                btn.classList.remove('bg-white', 'text-rgsu-900', 'shadow-sm');
-                btn.classList.add('text-slate-500', 'hover:text-rgsu-900');
-            });
-            
-            const activeBtn = level === 'all' ? btnAll : (level === 'VO' ? btnVo : btnSpo);
-            activeBtn.classList.remove('text-slate-500', 'hover:text-rgsu-900');
-            activeBtn.classList.add('bg-white', 'text-rgsu-900', 'shadow-sm');
-
+        function setSearch(val) {
+            document.getElementById('searchInput').value = val;
             filterData();
         }
 
         function filterData() {
-            const query = searchInput.value.toLowerCase();
-            const onlyBudget = budgetToggle.checked;
-            const currentDistrict = districtFilter.value;
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const reg = document.getElementById('districtFilter').value;
+            const budget = document.getElementById('budgetToggle').checked;
 
-            const filtered = programs.filter(item => {
-                const matchesSearch = (item.title || "").toLowerCase().includes(query) || 
-                                      (item.fgos_code || "").includes(query) || 
-                                      (item.tags || []).some(t => t.toLowerCase().includes(query)) ||
-                                      (item.institution || "").toLowerCase().includes(query);
-                
-                const matchesLevel = currentLevel === 'all' || item.level === currentLevel;
-                
-                // Гибкое сравнение округов (если в таблице написано "Центральный", а фильтр "ЦФО", можно допилить логику, пока простое сравнение)
-                const matchesDistrict = currentDistrict === 'all' || (item.district && item.district.includes(currentDistrict));
-                
-                const matchesBudget = !onlyBudget || (item.tags || []).some(t => t.includes("Бюджет") || t.includes("Квота"));
-                
-                return matchesSearch && matchesLevel && matchesDistrict && matchesBudget;
+            const res = programs.filter(p => {
+                const matchSearch = p.title.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q) || p.inst.toLowerCase().includes(q);
+                const matchLvl = currentLevel === 'all' || p.level === currentLevel;
+                const matchReg = reg === 'all' || p.region === reg;
+                const matchBudg = !budget || p.tags.includes('Бюджет');
+                return matchSearch && matchLvl && matchReg && matchBudg;
             });
 
-            renderCards(filtered);
+            renderGrid(res);
         }
 
-        function renderCards(data) {
-            grid.innerHTML = '';
+        function renderGrid(data) {
+            const grid = document.getElementById('catalogGrid');
+            document.getElementById('resultsCount').innerHTML = `Найдено: <span class="text-rgsu-700">${data.length}</span>`;
             
-            // Анимация счетчика
-            countLabel.innerHTML = `Найдено: <span class="text-rgsu-700 font-bold">${data.length}</span>`;
-            
-            if (data.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-24 bg-white rounded-3xl border border-dashed border-slate-200 animate-fade-in">
-                        <div class="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i data-lucide="search-x" class="w-10 h-10 text-slate-300"></i>
-                        </div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">Ничего не найдено</h3>
-                        <p class="text-slate-500 max-w-xs mx-auto">Попробуйте изменить параметры поиска или отключить фильтр "Только бюджет"</p>
-                        <button onclick="resetFilters()" class="mt-6 text-rgsu-600 font-semibold hover:underline">Сбросить фильтры</button>
-                    </div>
-                `;
-                lucide.createIcons();
+            if (!data.length) {
+                grid.innerHTML = `<div class="col-span-3 text-center py-20 bg-white rounded-3xl border border-dashed"><p class="text-slate-500">Ничего не найдено</p><button onclick="setSearch(''); setLevel('all')" class="mt-4 text-blue-600 font-bold">Сбросить</button></div>`;
                 return;
             }
 
-            data.slice(0, 50).forEach((item, index) => { // Ограничим рендер 50 карточками для скорости
-                // Определяем цвета для карточки
-                const isVo = item.level === 'VO';
-                const badgeColor = isVo ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100';
-                
-                // Рендер тегов
-                const badges = (item.tags || []).map(tag => {
-                    let style = 'bg-slate-100 text-slate-600 border-slate-200';
-                    if(tag.includes('Бюджет')) style = 'bg-green-50 text-green-700 border-green-100';
-                    if(tag.includes('Квота')) style = 'bg-blue-50 text-blue-700 border-blue-100';
-                    if(tag.includes('ВПК') || tag.includes('Секретно')) style = 'bg-amber-50 text-amber-700 border-amber-100';
-                    return `<span class="px-2.5 py-1 rounded-md text-[11px] font-semibold border ${style}">${tag}</span>`;
-                }).join('');
-
-                const card = document.createElement('div');
-                card.className = 'group bg-white rounded-2xl p-0 shadow-sm hover:shadow-lg card-hover border border-slate-200/60 overflow-hidden flex flex-col h-full animate-fade-in';
-                card.style.animationDelay = `${Math.min(index * 0.05, 1)}s`; // Cap delay
-                
-                card.onclick = (e) => {
-                    openModal(item);
-                };
-
-                card.innerHTML = `
-                    <div class="relative h-2 w-full bg-gradient-to-r from-rgsu-700 to-rgsu-600 overflow-hidden">
-                        <div class="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            grid.innerHTML = data.slice(0, 40).map(p => `
+                <div class="bg-white rounded-2xl shadow-sm hover:shadow-lg card-hover border border-slate-100 flex flex-col p-6 animate-fade-in relative cursor-pointer" onclick="openModal(${p.id})">
+                    <div class="flex gap-2 mb-3">
+                        <span class="px-2 py-1 rounded-md text-[10px] font-bold border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'}">${p.level === 'VO' ? 'ВУЗ' : 'СПО'}</span>
+                        <span class="px-2 py-1 rounded-md text-[10px] bg-slate-50 border text-slate-500">${p.region}</span>
                     </div>
-                    
-                    <div class="p-6 flex flex-col h-full">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex gap-2">
-                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider border ${badgeColor} uppercase">
-                                    ${item.level_readable}
-                                </span>
-                                ${item.district ? `<span class="px-2 py-1 rounded-full text-[10px] font-bold tracking-wider border bg-slate-50 border-slate-200 text-slate-500 uppercase" title="Федеральный округ">${item.district}</span>` : ''}
-                            </div>
-                            <div class="flex items-center gap-1 text-xs font-medium text-slate-400 font-mono">
-                                <i data-lucide="hash" class="w-3 h-3"></i>${item.fgos_code}
-                            </div>
-                        </div>
-
-                        <h3 class="text-lg font-bold text-slate-900 mb-2 leading-snug group-hover:text-rgsu-700 transition-colors line-clamp-2">
-                            ${item.title}
-                        </h3>
-                        <p class="text-sm text-slate-500 mb-4 line-clamp-2 flex-grow">${item.desc}</p>
-                        
-                        <div class="flex flex-wrap gap-2 mb-6">
-                            ${badges}
-                        </div>
-
-                        <div class="mt-auto pt-4 border-t border-slate-100 grid grid-cols-2 gap-y-2 text-sm">
-                            <div>
-                                <p class="text-slate-400 text-xs mb-0.5">ВУЗ / ССУЗ</p>
-                                <p class="font-semibold text-slate-700 truncate pr-2" title="${item.institution}">${item.institution}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-slate-400 text-xs mb-0.5">Срок обучения</p>
-                                <p class="font-semibold text-slate-700">${item.duration}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-between items-center group-hover:bg-rgsu-50 transition-colors">
-                        <span class="text-xs font-medium text-slate-500 group-hover:text-rgsu-700">Подробнее о программе</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4 text-slate-300 group-hover:text-rgsu-600 transition-all group-hover:translate-x-1"></i>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-            lucide.createIcons();
-        }
-
-        function resetFilters() {
-            searchInput.value = '';
-            budgetToggle.checked = false;
-            districtFilter.value = 'all';
-            filterByLevel('all');
-        }
-
-        // === МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ ===
-        const modal = document.getElementById('modal');
-        const modalPanel = document.getElementById('modalPanel');
-        const modalContent = document.getElementById('modalContent');
-
-        function openModal(item) {
-            modal.classList.remove('hidden');
-            // Небольшая задержка для анимации появления
-            setTimeout(() => {
-                modal.classList.remove('opacity-0');
-                modalPanel.classList.remove('scale-95', 'opacity-0');
-                modalPanel.classList.add('scale-100', 'opacity-100');
-            }, 10);
-            document.body.style.overflow = 'hidden'; // Блокируем скролл фона
-
-            // Генерация контента модалки
-            const isSPO = item.level === 'SPO';
-            
-            modalContent.innerHTML = `
-                <div class="px-6 pt-8 pb-6 sm:px-8">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="h-14 w-14 rounded-2xl bg-rgsu-50 flex items-center justify-center shrink-0 text-rgsu-700 shadow-inner">
-                             <i data-lucide="${isSPO ? 'book-open' : 'graduation-cap'}" class="w-7 h-7"></i>
-                        </div>
-                        <div>
-                            <div class="flex gap-2 mb-1">
-                                <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">${item.level_readable}</span>
-                                <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 font-mono">${item.fgos_code}</span>
-                                <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-700/10">${item.district || 'РФ'}</span>
-                            </div>
-                            <h2 class="text-2xl font-bold text-slate-900 leading-snug">${item.title}</h2>
-                            <p class="text-slate-500 text-sm mt-1 font-medium">${item.fgos_name}</p>
-                            <p class="text-rgsu-700 text-sm mt-1 font-bold">${item.institution}</p>
-                        </div>
-                    </div>
-
-                    <!-- Информационные карточки -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p class="text-xs text-slate-400 mb-1">Бюджетных мест</p>
-                            <div class="flex items-baseline gap-1">
-                                <span class="text-xl font-bold text-rgsu-900">${item.places}</span>
-                                <span class="text-xs text-green-600 font-medium bg-green-100 px-1.5 rounded">+5 квот</span>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p class="text-xs text-slate-400 mb-1">Зарплата на старте</p>
-                            <div class="flex items-baseline gap-1">
-                                <span class="text-xl font-bold text-slate-900">${item.salary}</span>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p class="text-xs text-slate-400 mb-1">База образования</p>
-                            <span class="text-base font-bold text-slate-900">${item.base}</span>
-                        </div>
-                    </div>
-
-                    <div class="prose prose-sm prose-slate max-w-none text-slate-600 bg-white">
-                        <h4 class="text-rgsu-900 font-bold text-base mb-2 flex items-center gap-2">
-                            <i data-lucide="info" class="w-4 h-4 text-accent"></i> О программе
-                        </h4>
-                        <p class="mb-4 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-100">
-                            ${item.desc}
-                        </p>
-                        
-                        <h4 class="text-rgsu-900 font-bold text-base mb-3">Преимущества для участников СВО</h4>
-                        <ul class="space-y-3 mb-4">
-                            <li class="flex gap-3 items-start">
-                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i data-lucide="check" class="w-3.5 h-3.5 text-green-700"></i>
-                                </div>
-                                <span class="text-sm"><strong>Приоритетное зачисление:</strong> без вступительных испытаний (для СПО) или по отдельной квоте (для ВУЗов).</span>
-                            </li>
-                            <li class="flex gap-3 items-start">
-                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i data-lucide="check" class="w-3.5 h-3.5 text-green-700"></i>
-                                </div>
-                                <span class="text-sm"><strong>Социальная стипендия:</strong> повышенная стипендия с первого месяца обучения.</span>
-                            </li>
-                             <li class="flex gap-3 items-start">
-                                <div class="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                                    <i data-lucide="check" class="w-3.5 h-3.5 text-green-700"></i>
-                                </div>
-                                <span class="text-sm"><strong>Психологическая поддержка:</strong> доступ к центру психологической помощи РГСУ.</span>
-                            </li>
-                        </ul>
+                    <h3 class="font-bold text-slate-900 mb-2 leading-tight line-clamp-2">${p.title}</h3>
+                    <p class="text-xs text-slate-500 mb-4 line-clamp-2">${p.cat}</p>
+                    <div class="mt-auto pt-4 border-t flex justify-between text-sm">
+                        <div class="truncate max-w-[60%] font-semibold text-slate-700">${p.inst}</div>
+                        <div class="font-bold text-rgsu-700">${p.tags.includes('Бюджет') ? 'Бюджет' : ''}</div>
                     </div>
                 </div>
-            `;
+            `).join('');
+        }
+
+        // === MODALS ===
+        function openModal(id) {
+            const p = programs.find(x => x.id === id);
+            if (!p) return;
             
+            document.getElementById('modalContent').innerHTML = `
+                <div class="flex items-start gap-4 mb-6">
+                    <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><i data-lucide="graduation-cap"></i></div>
+                    <div>
+                        <div class="text-xs text-slate-500 mb-1">${p.code} • ${p.level === 'VO' ? 'Высшее' : 'Среднее профессиональное'}</div>
+                        <h2 class="text-xl font-bold leading-tight">${p.title}</h2>
+                        <p class="text-blue-700 font-semibold mt-1">${p.inst}</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-6">
+                    <div class="bg-slate-50 p-3 rounded-lg"><div class="text-xs text-slate-400">Места</div><div class="font-bold">${p.places}</div></div>
+                    <div class="bg-slate-50 p-3 rounded-lg"><div class="text-xs text-slate-400">Регион</div><div class="font-bold">${p.region}</div></div>
+                </div>
+                <div class="prose prose-sm text-slate-600 mb-6 bg-slate-50 p-4 rounded-xl">${p.desc}</div>
+                <a href="${p.url}" target="_blank" class="block w-full text-center bg-rgsu-700 text-white py-3 rounded-xl hover:bg-rgsu-600 transition">Перейти на сайт ВУЗа</a>
+            `;
+            const m = document.getElementById('modal');
+            m.classList.remove('hidden');
+            setTimeout(() => { 
+                m.querySelector('.bg-slate-900\\/60').classList.remove('opacity-0');
+                document.getElementById('modalPanel').classList.remove('scale-95', 'opacity-0');
+                document.getElementById('modalPanel').classList.add('scale-100', 'opacity-100');
+            }, 10);
             lucide.createIcons();
         }
 
         function closeModal() {
-            modalPanel.classList.remove('scale-100', 'opacity-100');
-            modalPanel.classList.add('scale-95', 'opacity-0');
-            modal.classList.add('opacity-0');
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                document.body.style.overflow = ''; // Возвращаем скролл
-            }, 300);
+            const m = document.getElementById('modal');
+            document.getElementById('modalPanel').classList.remove('scale-100', 'opacity-100');
+            document.getElementById('modalPanel').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 200);
         }
 
-        // === QUIZ LOGIC ===
-        const quizModal = document.getElementById('quizModal');
-        const quizStep1 = document.getElementById('quizStep1');
-        const quizStep2 = document.getElementById('quizStep2');
-        let quizSelection = {
-            interest: null,
-            edu: null
-        };
-
-        function openQuiz() {
-            quizModal.classList.remove('hidden');
-            setTimeout(() => {
-                quizModal.classList.remove('opacity-0');
-            }, 10);
-            // Reset
-            quizStep1.classList.remove('hidden');
-            quizStep2.classList.add('hidden');
-            quizSelection = {};
-        }
-
-        function closeQuiz() {
-            quizModal.classList.add('opacity-0');
-            setTimeout(() => {
-                quizModal.classList.add('hidden');
-            }, 300);
-        }
-
-        function selectInterest(interest) {
-            quizSelection.interest = interest;
-            quizStep1.classList.add('hidden');
-            quizStep2.classList.remove('hidden');
-        }
-
-        function prevStep() {
-            quizStep2.classList.add('hidden');
-            quizStep1.classList.remove('hidden');
-        }
-
-        function selectEdu(edu) {
-            quizSelection.edu = edu;
-            closeQuiz();
-            applyQuizResults();
-        }
-
-        function applyQuizResults() {
-            // Filter programs based on quiz
-            const filtered = programs.filter(item => {
-                let matchesInterest = false;
-                let matchesEdu = false;
-
-                // Check Interest (Fallback logic for fetched data which might lack quiz_cat)
-                const category = (item.category || "").toLowerCase();
-                if (quizSelection.interest === 'IT' && (category.includes('it') || category.includes('цифр'))) matchesInterest = true;
-                if (quizSelection.interest === 'People' && (category.includes('соц') || category.includes('псих') || category.includes('педагог'))) matchesInterest = true;
-                if (quizSelection.interest === 'Tech' && (category.includes('тех') || category.includes('трансп') || category.includes('инж'))) matchesInterest = true;
-                // Default true if we can't guess
-                if (!matchesInterest && !item.quiz_cat) matchesInterest = true; 
-
-                // Check Edu
-                if (quizSelection.edu === '9' && item.level === 'SPO') matchesEdu = true;
-                if (quizSelection.edu === '11' && item.level === 'VO') matchesEdu = true;
-
-                return matchesInterest && matchesEdu;
-            });
-
-            // Scroll to grid and show results
-            window.scrollTo({ top: document.getElementById('catalogGrid').offsetTop - 200, behavior: 'smooth' });
-            
-            // Force filter UI updates (optional visual sync)
-            if(quizSelection.edu === '9') filterByLevel('SPO');
-            else filterByLevel('VO');
-
-            // Render specific results override
-            if (filtered.length > 0) {
-                renderCards(filtered);
-                countLabel.innerHTML = `Мы подобрали для вас: <span class="text-rgsu-700 font-bold">${filtered.length}</span>`;
-            } else {
-                grid.innerHTML = `
-                    <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-24 bg-white rounded-3xl border border-dashed border-slate-200">
-                        <h3 class="text-lg font-bold text-slate-800 mb-2">К сожалению, точных совпадений нет</h3>
-                        <p class="text-slate-500">Попробуйте изменить параметры или посмотреть полный каталог.</p>
-                        <button onclick="resetFilters()" class="mt-4 text-rgsu-700 font-bold">Показать все программы</button>
-                    </div>
-                `;
-            }
-        }
-
-        // === AI CONSULTANT LOGIC ===
+        // === AI (Simple Implementation) ===
         const aiModal = document.getElementById('aiModal');
-        const aiInput = document.getElementById('aiInput');
-        const aiSendBtn = document.getElementById('aiSendBtn');
-        const aiResultContainer = document.getElementById('aiResultContainer');
-        const aiInitialState = document.getElementById('aiInitialState');
-        const aiLoadingState = document.getElementById('aiLoadingState');
-        const aiResponseContent = document.getElementById('aiResponseContent');
+        function openAiModal() { aiModal.classList.remove('hidden'); }
+        function closeAiModal() { aiModal.classList.add('hidden'); }
         
-        const apiKey = ""; // System provided API key
-
-        function openAiModal() {
-            aiModal.classList.remove('hidden');
-            setTimeout(() => {
-                aiModal.classList.remove('opacity-0');
-            }, 10);
-            aiInput.focus();
-        }
-
-        function closeAiModal() {
-            aiModal.classList.add('opacity-0');
-            setTimeout(() => {
-                aiModal.classList.add('hidden');
-            }, 300);
-        }
-
         async function callGeminiAPI() {
-            const userQuery = aiInput.value.trim();
-            if (!userQuery) return;
-
-            // UI Updates
-            aiInput.value = '';
-            aiInput.disabled = true;
-            aiSendBtn.disabled = true;
-            aiInitialState.classList.add('hidden');
-            aiResponseContent.classList.add('hidden');
-            aiLoadingState.classList.remove('hidden');
-
-            // Prepare Data Context - take top 20 items to save tokens if list is huge
-            const contextData = programs.slice(0, 30).map(p => ({
-                title: p.title,
-                code: p.fgos_code,
-                level: p.level_readable,
-                city: p.district,
-                desc: p.desc,
-                tags: p.tags
-            }));
-
-            const programsContext = JSON.stringify(contextData);
-
-            const prompt = `
-                Ты — эксперт приемной комиссии РГСУ. Твоя задача — помочь абитуриенту (участнику СВО или члену семьи) выбрать образовательную программу.
-                
-                Вот список доступных программ (JSON):
-                ${programsContext}
-
-                Запрос пользователя: "${userQuery}"
-
-                Твоя задача:
-                1. Проанализировать запрос и подобрать 1-3 наиболее подходящие программы из списка.
-                2. Если точных совпадений нет, предложи смежные области.
-                3. Отвечай дружелюбно, профессионально и с эмпатией.
-                4. Используй Markdown для форматирования (жирный шрифт для названий программ).
-                5. Обязательно объясни, почему ты рекомендуешь именно эти программы.
-            `;
-
+            const input = document.getElementById('aiInput');
+            const q = input.value;
+            if(!q) return;
+            
+            document.getElementById('aiInitialState').classList.add('hidden');
+            document.getElementById('aiResponseContent').innerHTML = "Думаю...";
+            document.getElementById('aiResponseContent').classList.remove('hidden');
+            
+            const context = programs.slice(0, 20).map(p => `${p.title} (${p.level}) в ${p.inst}`).join(', ');
+            const prompt = `Посоветуй программу из списка: ${context}. Запрос: ${q}`;
+            
+            // Note: In production, never expose API keys in frontend code
+            const apiKey = ""; 
+            
             try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{ text: prompt }]
-                        }]
-                    })
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
                 });
-
-                const data = await response.json();
-                const aiText = data.candidates[0].content.parts[0].text;
-
-                // Render Result
-                aiLoadingState.classList.add('hidden');
-                aiResponseContent.innerHTML = marked.parse(aiText);
-                aiResponseContent.classList.remove('hidden');
-
-            } catch (error) {
-                console.error('Error calling Gemini API:', error);
-                aiLoadingState.classList.add('hidden');
-                aiResponseContent.innerHTML = `<p class="text-red-500">Произошла ошибка. Пожалуйста, попробуйте позже.</p>`;
-                aiResponseContent.classList.remove('hidden');
-            } finally {
-                aiInput.disabled = false;
-                aiSendBtn.disabled = false;
-                aiInput.focus();
+                const data = await res.json();
+                document.getElementById('aiResponseContent').innerHTML = marked.parse(data.candidates[0].content.parts[0].text);
+            } catch(e) {
+                document.getElementById('aiResponseContent').innerHTML = "Ошибка AI.";
             }
+            input.value = "";
         }
 
-        // Allow Enter key to send in AI modal
-        aiInput.addEventListener('keypress', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                callGeminiAPI();
-            }
-        });
-
-
-        // Обработка ввода
-        searchInput.addEventListener('input', filterData);
-
-        // Слушатель на Esc для закрытия модалки
-        document.addEventListener('keydown', function(event) {
-            if (event.key === "Escape") {
-                closeModal();
-                closeQuiz();
-            }
-        });
+        // Init
+        document.addEventListener('DOMContentLoaded', loadData);
+        document.addEventListener('keydown', e => { if(e.key === "Escape") { closeModal(); closeAiModal(); } });
     </script>
 </body>
 </html>

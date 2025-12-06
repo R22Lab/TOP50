@@ -10,22 +10,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: { sans: ['Manrope', 'sans-serif'], body: ['Inter', 'sans-serif'] },
                     colors: {
                         rgsu: { 900: '#002C5F', 800: '#004080', 700: '#0054A6', 600: '#1A6BC2', 50: '#EAF4FF' },
+                        dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155', surface: '#1e293b' },
                         accent: { DEFAULT: '#F2994A', hover: '#E68A3E' }
                     },
                     animation: { 
                         'fade-in': 'fadeIn 0.5s ease-out',
                         'slide-up': 'slideUp 0.3s ease-out forwards',
-                        'toast': 'toastIn 0.3s ease-out forwards'
+                        'toast': 'toastIn 0.3s ease-out forwards',
+                        'pulse-soft': 'pulseSoft 2s infinite',
+                        'fly': 'flyToCart 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
                     },
                     keyframes: { 
                         fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
                         slideUp: { '0%': { transform: 'translateY(100%)' }, '100%': { transform: 'translateY(0)' } },
-                        toastIn: { '0%': { transform: 'translateX(100%)', opacity: '0' }, '100%': { transform: 'translateX(0)', opacity: '1' } }
+                        toastIn: { '0%': { transform: 'translateX(100%)', opacity: '0' }, '100%': { transform: 'translateX(0)', opacity: '1' } },
+                        pulseSoft: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.7' } },
+                        flyToCart: {
+                            '0%': { transform: 'scale(1)', opacity: '1' },
+                            '100%': { transform: 'translate(var(--tx), var(--ty)) scale(0.1)', opacity: '0' }
+                        }
                     }
                 }
             }
@@ -33,142 +42,181 @@
     </script>
     <style>
         body { background-color: #F8FAFC; }
-        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 20px -5px rgba(0, 44, 95, 0.1); }
+        .dark body { background-color: #0f172a; }
+        
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .dark .glass-panel { background: rgba(15, 23, 42, 0.95); border-color: rgba(255,255,255,0.1); }
+
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 15px 30px -5px rgba(0, 44, 95, 0.1); }
+        .dark .card-hover:hover { box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5); border-color: #334155; }
+
         .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 0.5rem; }
+        .dark .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); }
         @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        /* Checkbox custom style */
+        
         .custom-checkbox:checked { background-color: #0054A6; border-color: #0054A6; background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e"); }
-        /* Sticky Offset for Filters */
         .sticky-filters { position: sticky; top: 80px; z-index: 30; }
-        /* Highlight diff row in compare */
         .diff-row { background-color: #FEF3C7; }
+        .dark .diff-row { background-color: #383018; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen text-slate-800">
+<body class="flex flex-col min-h-screen text-slate-800 dark:text-slate-100 font-body transition-colors duration-300">
 
     <!-- Navbar -->
-    <header class="fixed w-full top-0 z-50 glass-panel border-b border-slate-200/80 shadow-sm" id="navbar">
+    <header class="fixed w-full top-0 z-50 glass-panel border-b border-slate-200/80 shadow-sm transition-all duration-300 dark:border-slate-800" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <a href="https://www.rgsu.net" class="flex items-center gap-4">
-                <img src="https://upload.wikimedia.org/wikipedia/ru/archive/4/42/20240520114700%21%D0%A0%D0%93%D0%A1%D0%A3_%D0%BB%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF.png" alt="Логотип" class="h-10 w-auto">
-                <div class="hidden md:block border-l-2 border-rgsu-200 pl-4">
-                    <h1 class="font-bold text-rgsu-900 text-xs uppercase tracking-wide">РГСУ</h1>
-                    <p class="text-[10px] text-slate-500 font-medium uppercase">Образование</p>
+            <a href="https://www.rgsu.net" class="flex items-center gap-4 group">
+                <img src="https://upload.wikimedia.org/wikipedia/ru/archive/4/42/20240520114700%21%D0%A0%D0%93%D0%A1%D0%A3_%D0%BB%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF.png" alt="Логотип" class="h-10 w-auto group-hover:scale-105 transition-transform duration-300 bg-white dark:bg-transparent rounded-lg p-0.5">
+                <div class="hidden md:block border-l-2 border-rgsu-200 dark:border-slate-700 pl-4">
+                    <h1 class="font-bold text-rgsu-900 dark:text-white text-xs uppercase tracking-wide">РГСУ</h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase">Образование</p>
                 </div>
             </a>
             <div class="flex items-center gap-3">
-                <button onclick="toggleFavFilter()" id="favFilterBtn" class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 transition text-sm">
-                    <i data-lucide="heart" class="w-4 h-4"></i> <span class="hidden sm:inline">Избранное</span>
+                <button onclick="toggleTheme()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition">
+                    <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                    <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                </button>
+                <button onclick="toggleFavFilter()" id="favFilterBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 hover:bg-red-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-all text-sm font-medium relative group">
+                    <i data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125" id="navHeartIcon"></i> <span class="hidden sm:inline">Избранное</span>
                 </button>
             </div>
         </div>
     </header>
 
     <!-- Hero -->
-    <div class="bg-rgsu-900 pt-28 pb-12 px-4 relative overflow-hidden text-center">
-        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-rgsu-600/20 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4"></div>
+    <div class="bg-rgsu-900 dark:bg-slate-900 pt-32 pb-16 px-4 relative overflow-hidden text-center transition-colors duration-500">
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-rgsu-600/20 rounded-full blur-3xl translate-x-1/3 -translate-y-1/4 animate-pulse-soft"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-accent/10 rounded-full blur-3xl -translate-x-1/3 translate-y-1/4"></div>
+        
         <div class="relative z-10 max-w-4xl mx-auto animate-fade-in">
-            <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4">Найди свою <span class="text-blue-200">профессию</span></h2>
-            <p class="text-slate-300 mb-8 text-base md:text-lg max-w-2xl mx-auto">Единый реестр программ переподготовки и высшего образования для участников СВО и их семей.</p>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Найди свою <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">профессию</span></h2>
+            <p class="text-slate-300 mb-10 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">Единый реестр программ переподготовки и высшего образования для участников СВО и их семей. Государственная поддержка и бюджетные места.</p>
             
-            <div class="relative max-w-xl mx-auto bg-white rounded-xl shadow-xl p-1.5 flex gap-2">
-                <div class="flex-grow flex items-center px-3 bg-slate-50 rounded-lg relative">
-                    <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
-                    <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3 outline-none bg-transparent text-sm pr-8">
-                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <div class="relative max-w-xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-2 flex gap-2 ring-4 ring-white/10 dark:ring-slate-700/50">
+                <div class="flex-grow flex items-center px-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl relative group focus-within:ring-2 focus-within:ring-rgsu-600 transition-all">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-rgsu-600 transition-colors"></i>
+                    <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3.5 outline-none bg-transparent text-sm pr-8 placeholder:text-slate-400 dark:text-white">
+                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
             </div>
             
             <!-- Dynamic Chips -->
-            <div id="popularFilters" class="flex flex-wrap justify-center gap-2 mt-6 text-xs">
+            <div id="popularFilters" class="flex flex-wrap justify-center gap-2 mt-8 text-xs">
                 <!-- JS injected -->
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 -mt-6 pb-20 relative z-20 flex-grow w-full">
+    <main class="max-w-7xl mx-auto px-4 -mt-8 pb-20 relative z-20 flex-grow w-full">
         
         <!-- Mobile Filter Toggle -->
-        <button onclick="toggleMobileSheet()" class="md:hidden w-full bg-white mb-4 py-3 rounded-xl shadow-sm font-semibold text-rgsu-900 flex justify-center items-center gap-2">
+        <button onclick="toggleMobileSheet()" class="md:hidden w-full bg-white dark:bg-slate-800 mb-4 py-3.5 rounded-2xl shadow-md font-bold text-rgsu-900 dark:text-white flex justify-center items-center gap-2 active:scale-95 transition-transform">
             <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Фильтры
         </button>
 
         <!-- Controls Panel (Sticky) -->
-        <div id="filterPanel" class="hidden md:flex sticky-filters flex-col xl:flex-row bg-white rounded-2xl shadow-lg border border-slate-100 p-4 mb-6 gap-4 justify-between items-start xl:items-center transition-all">
+        <div id="filterPanel" class="hidden md:flex sticky-filters flex-col gap-4 bg-white dark:bg-slate-800/90 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-700 p-4 mb-4 backdrop-blur-md transition-all">
             
-            <div class="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
-                <!-- Levels -->
-                <div id="levelButtons" class="flex p-1 bg-slate-100 rounded-lg w-full md:w-auto overflow-x-auto">
-                    <!-- JS Injected -->
-                </div>
-                
-                <!-- Searchable Region Input -->
-                <div class="relative w-full md:w-64">
-                    <input list="regions" id="regionInput" placeholder="Введите регион..." onchange="filterData()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:border-rgsu-600 transition pr-8">
-                    <button onclick="clearRegion()" id="clearRegionBtn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
-                    <datalist id="regions">
+            <div class="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
+                <div class="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
+                    <!-- Levels -->
+                    <div id="levelButtons" class="flex p-1.5 bg-slate-100 dark:bg-slate-900 rounded-xl w-full md:w-auto overflow-x-auto gap-1">
                         <!-- JS Injected -->
-                    </datalist>
+                    </div>
+                    
+                    <!-- Searchable Region Input -->
+                    <div class="relative w-full md:w-64">
+                        <div class="relative group">
+                            <input list="regions" id="regionInput" placeholder="Регион..." onchange="updateFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-rgsu-600 dark:focus:border-blue-500 focus:ring-2 focus:ring-rgsu-600/10 dark:text-white transition pr-9">
+                            <i data-lucide="map-pin" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-rgsu-600 transition-colors pointer-events-none" id="regionIcon"></i>
+                            <button onclick="clearRegion()" id="clearRegionBtn" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition bg-transparent"><i data-lucide="x" class="w-3 h-3"></i></button>
+                        </div>
+                        <datalist id="regions">
+                            <!-- JS Injected -->
+                        </datalist>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="relative w-full md:w-48">
+                        <select id="sortSelect" onchange="updateFilters()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-rgsu-600 dark:focus:border-blue-500 cursor-pointer appearance-none dark:text-white">
+                            <option value="default">По релевантности</option>
+                            <option value="budget_desc">Больше бюджетных мест</option>
+                            <option value="name_asc">Название (А-Я)</option>
+                            <option value="region_asc">Регион (А-Я)</option>
+                        </select>
+                        <i data-lucide="arrow-up-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto border-t xl:border-none pt-4 xl:pt-0 dark:border-slate-700">
+                    <label class="flex items-center gap-2 cursor-pointer select-none group">
+                        <input type="checkbox" id="budgetToggle" class="custom-checkbox w-5 h-5 border-2 border-slate-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-rgsu-600 focus:ring-offset-1 cursor-pointer appearance-none bg-white dark:bg-slate-700 transition-all" onchange="updateFilters()">
+                        <span class="text-sm font-medium text-slate-600 dark:text-slate-300 group-hover:text-rgsu-900 dark:group-hover:text-white transition-colors">Только бюджет</span>
+                    </label>
+
+                    <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+
+                    <!-- Compact View Toggle -->
+                    <button onclick="toggleCompactMode()" id="compactToggleBtn" class="p-2 text-slate-400 hover:text-rgsu-700 hover:bg-slate-50 dark:hover:bg-slate-700 dark:hover:text-white rounded-lg transition" title="Компактный вид">
+                        <i data-lucide="align-justify" class="w-5 h-5"></i>
+                    </button>
                 </div>
             </div>
-            
-            <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto border-t xl:border-none pt-4 xl:pt-0">
-                <h3 class="text-xs font-bold uppercase text-slate-400 whitespace-nowrap" id="resultsCount">...</h3>
-                
-                <label class="flex items-center gap-2 cursor-pointer select-none">
-                    <input type="checkbox" id="budgetToggle" class="custom-checkbox w-5 h-5 border-2 border-slate-300 rounded focus:ring-0 cursor-pointer appearance-none bg-white transition-all" onchange="filterData()">
-                    <span class="text-sm font-medium text-slate-700">Только бюджет</span>
-                </label>
 
-                <div class="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
-
-                <!-- Compact View Toggle -->
-                <button onclick="toggleCompactMode()" id="compactToggleBtn" class="text-slate-400 hover:text-rgsu-700 transition" title="Компактный вид">
-                    <i data-lucide="align-justify" class="w-5 h-5"></i>
-                </button>
-            </div>
+            <!-- Active Filters Chips -->
+            <div id="activeFilters" class="flex flex-wrap gap-2 text-xs empty:hidden pt-2 border-t border-slate-100 dark:border-slate-700"></div>
+            <!-- Results Count (Ensuring ID exists for JS) -->
+            <div id="resultsCount" class="hidden"></div>
         </div>
 
         <!-- Grid -->
-        <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div class="skeleton h-80"></div><div class="skeleton h-80"></div><div class="skeleton h-80"></div>
+        <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="skeleton h-80 rounded-2xl"></div><div class="skeleton h-80 rounded-2xl"></div><div class="skeleton h-80 rounded-2xl"></div>
         </div>
 
         <!-- Load More -->
-        <div class="mt-10 text-center">
-            <button id="loadMoreBtn" onclick="loadMore()" class="hidden px-8 py-3 bg-white border border-slate-200 text-slate-600 font-semibold rounded-xl hover:bg-slate-50 hover:border-slate-300 transition shadow-sm">
-                Загрузить еще
+        <div class="mt-12 text-center pb-8">
+            <button id="loadMoreBtn" onclick="loadMore()" class="hidden px-8 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-rgsu-200 hover:text-rgsu-700 transition shadow-sm active:scale-95 flex items-center gap-2 mx-auto">
+                <span>Загрузить еще</span>
             </button>
         </div>
     </main>
 
     <!-- Scroll to Top Button -->
-    <button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-24 right-6 z-40 bg-white border border-slate-200 p-3 rounded-full shadow-lg text-slate-500 hover:text-rgsu-700 hover:shadow-xl transition-all hidden translate-y-10 opacity-0 duration-300" title="Наверх">
-        <i data-lucide="arrow-up" class="w-5 h-5"></i>
+    <button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-24 right-6 z-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3.5 rounded-full shadow-lg text-slate-500 dark:text-slate-400 hover:text-rgsu-700 dark:hover:text-white hover:shadow-xl transition-all hidden translate-y-10 opacity-0 duration-300 active:scale-90" title="Наверх">
+        <i data-lucide="arrow-up" class="w-6 h-6"></i>
     </button>
 
     <!-- Comparison Bar (Fixed Bottom) -->
-    <div id="compareBar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-rgsu-900 text-white px-6 py-3 rounded-full shadow-2xl z-40 hidden flex items-center gap-4 animate-fade-in backdrop-blur-md bg-rgsu-900/95 border border-white/10">
-        <span class="font-bold text-sm" id="compareCount">0 выбрано</span>
-        <button onclick="openCompareModal()" class="bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-full text-xs font-bold transition">Сравнить</button>
-        <button onclick="clearCompare()" class="text-white/50 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <div id="compareBar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-rgsu-900/90 dark:bg-slate-800/90 text-white px-6 py-3 rounded-full shadow-2xl z-40 hidden flex items-center gap-4 animate-fade-in backdrop-blur-md border border-white/10 ring-1 ring-black/5">
+        <span class="font-bold text-sm flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-accent animate-pulse"></div> <span id="compareCount">0</span> выбрано</span>
+        <div class="h-4 w-px bg-white/20"></div>
+        <button onclick="openCompareModal()" class="bg-white/20 hover:bg-white/30 px-5 py-1.5 rounded-full text-xs font-bold transition uppercase tracking-wide">Сравнить</button>
+        <button onclick="clearCompare()" class="text-white/50 hover:text-white hover:bg-white/10 p-1 rounded-full transition"><i data-lucide="x" class="w-4 h-4"></i></button>
     </div>
 
     <!-- Toast Notification Container -->
-    <div id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-24 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
     <!-- Mobile Bottom Sheet (Filters) -->
     <div id="mobileSheet" class="fixed inset-0 z-[60] hidden">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="toggleMobileSheet()"></div>
-        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 shadow-2xl transform transition-transform duration-300 translate-y-full" id="mobileSheetContent">
-            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
-            <h3 class="font-bold text-lg mb-4">Фильтры</h3>
-            <div id="mobileFiltersContainer" class="space-y-4">
+        <div class="absolute bottom-0 left-0 right-0 bg-white dark:bg-slate-900 rounded-t-3xl p-6 shadow-2xl transform transition-transform duration-300 translate-y-full" id="mobileSheetContent">
+            <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-8"></div>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-xl text-slate-900 dark:text-white">Фильтры</h3>
+                <button onclick="toggleMobileSheet()" class="p-2 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div id="mobileFiltersContainer" class="space-y-6">
                 <!-- Filters will be cloned here for mobile -->
             </div>
-            <button onclick="toggleMobileSheet()" class="w-full bg-rgsu-700 text-white font-bold py-3.5 rounded-xl mt-6">Применить</button>
+            <button onclick="toggleMobileSheet()" class="w-full bg-rgsu-700 text-white font-bold py-4 rounded-xl mt-8 shadow-lg shadow-rgsu-900/20 active:scale-95 transition-transform">Применить</button>
         </div>
     </div>
 
@@ -177,9 +225,9 @@
     <div id="modal" class="fixed inset-0 z-[100] hidden" role="dialog">
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
         <div class="fixed inset-0 z-10 overflow-y-auto p-4 flex items-center justify-center">
-            <div class="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full transform transition-all scale-95 opacity-0" id="modalPanel">
-                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 z-10"><i data-lucide="x" class="w-5 h-5"></i></button>
-                <div id="modalContent" class="p-6 max-h-[85vh] overflow-y-auto custom-scrollbar"></div>
+            <div class="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full transform transition-all scale-95 opacity-0 overflow-hidden border border-slate-200 dark:border-slate-700" id="modalPanel">
+                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-600 z-10 transition dark:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <div id="modalContent" class="p-8 max-h-[85vh] overflow-y-auto custom-scrollbar"></div>
             </div>
         </div>
     </div>
@@ -188,15 +236,18 @@
     <div id="compareModal" class="fixed inset-0 z-[100] hidden">
         <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onclick="document.getElementById('compareModal').classList.add('hidden')"></div>
         <div class="fixed inset-0 z-10 overflow-auto p-4 flex items-center justify-center">
-            <div class="bg-white rounded-2xl shadow-xl w-full max-w-5xl p-6 overflow-hidden flex flex-col max-h-[90vh]">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">Сравнение программ</h2>
-                    <button onclick="document.getElementById('compareModal').classList.add('hidden')"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-6xl p-8 overflow-hidden flex flex-col max-h-[90vh] border border-slate-200 dark:border-slate-700">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Сравнение программ</h2>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm">Сравните условия и выберите лучшее</p>
+                    </div>
+                    <button onclick="document.getElementById('compareModal').classList.add('hidden')" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition dark:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
                 </div>
-                <div class="bg-blue-50/50 p-2 rounded-lg mb-2 text-xs text-blue-700 flex items-center gap-2">
-                    <i data-lucide="info" class="w-4 h-4"></i> Отличия выделены цветом
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-3 rounded-xl mb-4 text-xs text-blue-800 dark:text-blue-300 flex items-center gap-2 font-medium">
+                    <i data-lucide="info" class="w-4 h-4"></i> Различия в параметрах выделены цветом
                 </div>
-                <div class="overflow-x-auto flex-grow">
+                <div class="overflow-auto flex-grow custom-scrollbar border border-slate-100 dark:border-slate-800 rounded-xl relative">
                     <div id="compareContent" class="min-w-max"></div>
                 </div>
             </div>
@@ -209,11 +260,19 @@
         let allPrograms = [];
         let filteredPrograms = [];
         let visibleCount = 21;
-        let currentLevel = 'all';
         let showFavorites = false;
         let isCompactMode = false;
         
-        // State
+        // Initial Filter State
+        const initialState = {
+            level: 'all',
+            search: '',
+            region: '',
+            budget: false,
+            sort: 'default'
+        };
+        let filters = { ...initialState };
+
         const favorites = JSON.parse(localStorage.getItem('rgsu_favs') || '[]');
         const compareList = new Set();
 
@@ -222,27 +281,48 @@
 
         // === INITIALIZATION ===
         document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            readURL(); // Load filters from URL
             loadData();
             
-            // Scroll Listener for "Back to Top"
+            if (window.location.hash.startsWith('#program=')) {
+                const id = parseInt(window.location.hash.split('=')[1]);
+                if (!isNaN(id)) setTimeout(() => openModal(id), 500);
+            }
+
             window.addEventListener('scroll', () => {
                 const btn = document.getElementById('scrollTopBtn');
-                if (window.scrollY > 400) {
-                    btn.classList.remove('hidden', 'translate-y-10', 'opacity-0');
-                } else {
-                    btn.classList.add('translate-y-10', 'opacity-0');
-                    setTimeout(() => btn.classList.add('hidden'), 300);
-                }
+                if(!btn) return;
+                if (window.scrollY > 400) btn.classList.remove('hidden', 'translate-y-10', 'opacity-0');
+                else btn.classList.add('translate-y-10', 'opacity-0');
             });
         });
 
         document.getElementById('searchInput').addEventListener('input', (e) => { 
             const btn = document.getElementById('clearSearchBtn');
-            if (e.target.value) btn.classList.remove('hidden');
-            else btn.classList.add('hidden');
-            filterData(true); 
+            if (e.target.value) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+            updateFilters(); 
         });
 
+        // === THEME ===
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+
+        // === DATA & FILTERS ===
         async function loadData() {
             try {
                 const response = await fetch(CSV_URL);
@@ -255,6 +335,10 @@
                     const hasBudget = budget.toLowerCase().includes('есть') || budget.toLowerCase().includes('мест');
                     const macro = row['macrogroup_name'] || "Общее";
                     
+                    // Safe budget parsing
+                    const budgetMatch = budget.match(/\d+/);
+                    const rawBudget = budgetMatch ? parseInt(budgetMatch[0]) : (hasBudget ? 1 : 0);
+
                     return {
                         id: i,
                         title: row['program_name'] || "Без названия",
@@ -268,389 +352,336 @@
                         url: row['url'] || "#",
                         desc: `${row['program_name']}. ${macro}.`,
                         color: getCatColor(macro),
-                        icon: getCatIcon(macro)
+                        icon: getCatIcon(macro),
+                        rawBudget: rawBudget
                     };
                 });
                 
-                initFilters();
-                filterData(true);
-
-                // Open deep link if data ready
-                if (window.location.hash.startsWith('#program=')) {
-                    const id = parseInt(window.location.hash.split('=')[1]);
-                    // Wait a bit to ensure rendering
-                    setTimeout(() => {
-                        openModal(id);
-                    }, 500);
-                }
-
+                initUI();
+                applyFilters();
             } catch (e) {
                 console.error(e);
-                document.getElementById('catalogGrid').innerHTML = `<div class="col-span-3 text-center py-20 text-red-500 font-bold">Не удалось загрузить данные таблицы.</div>`;
+                const grid = document.getElementById('catalogGrid');
+                if(grid) grid.innerHTML = `<div class="col-span-3 text-center py-20 text-red-500 font-bold dark:text-red-400">Ошибка загрузки данных.</div>`;
             }
         }
 
-        // === UI HELPERS ===
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function clearSearch() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('clearSearchBtn').classList.add('hidden');
-            filterData(true);
-        }
-
-        function clearRegion() {
-            document.getElementById('regionInput').value = '';
-            document.getElementById('clearRegionBtn').classList.add('hidden');
-            filterData(true);
-        }
-
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            
-            const icon = type === 'success' ? 'check-circle' : 'info';
-            const color = type === 'success' ? 'bg-emerald-600' : 'bg-slate-800';
-
-            toast.className = `${color} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-toast pointer-events-auto min-w-[200px]`;
-            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i> <span class="text-sm font-semibold">${message}</span>`;
-            
-            container.appendChild(toast);
-            lucide.createIcons();
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                toast.style.transition = 'all 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function copyLink(id) {
-            const url = `${window.location.origin}${window.location.pathname}#program=${id}`;
-            
-            // Robust Copy Fallback
-            const textArea = document.createElement("textarea");
-            textArea.value = url;
-            
-            // Avoid scrolling to bottom
-            textArea.style.top = "0";
-            textArea.style.left = "0";
-            textArea.style.position = "fixed";
-            textArea.style.opacity = "0";
-
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-
-            try {
-                const successful = document.execCommand('copy');
-                if (successful) {
-                    showToast('Ссылка скопирована');
-                } else {
-                    throw new Error('Fallback copy failed');
-                }
-            } catch (err) {
-                console.error('Copy failed', err);
-                showToast('Не удалось скопировать', 'info');
-            }
-
-            document.body.removeChild(textArea);
-        }
-
-        function toggleCompactMode() {
-            isCompactMode = !isCompactMode;
-            const btn = document.getElementById('compactToggleBtn');
-            if (isCompactMode) {
-                btn.classList.add('text-rgsu-700', 'bg-slate-100', 'rounded');
-            } else {
-                btn.classList.remove('text-rgsu-700', 'bg-slate-100', 'rounded');
-            }
-            renderGrid();
-        }
-
-        // === MOBILE SHEET ===
-        function toggleMobileSheet() {
-            const sheet = document.getElementById('mobileSheet');
-            const content = document.getElementById('mobileSheetContent');
-            const filtersContainer = document.getElementById('mobileFiltersContainer');
-            
-            if (sheet.classList.contains('hidden')) {
-                // Open
-                // Clone filters if empty
-                if (filtersContainer.children.length === 0) {
-                     // Clone Levels
-                     const levels = document.getElementById('levelButtons').cloneNode(true);
-                     levels.id = "mobileLevels";
-                     levels.className = "flex gap-2 overflow-x-auto pb-2";
-                     
-                     // Clone Region
-                     const regionWrap = document.createElement('div');
-                     regionWrap.innerHTML = `<label class="block text-sm font-bold mb-2">Регион</label>`;
-                     const regionInput = document.getElementById('regionInput').cloneNode(true);
-                     regionInput.id = "mobileRegionInput";
-                     regionWrap.appendChild(regionInput);
-
-                     // Clone Budget
-                     const budgetWrap = document.createElement('div');
-                     budgetWrap.className = "flex items-center gap-3 pt-4 border-t border-slate-100";
-                     const budgetToggle = document.getElementById('budgetToggle').cloneNode(true);
-                     budgetToggle.id = "mobileBudgetToggle";
-                     budgetWrap.innerHTML = `<span class="text-sm font-bold">Только бюджет</span>`;
-                     budgetWrap.prepend(budgetToggle);
-
-                     filtersContainer.appendChild(levels);
-                     filtersContainer.appendChild(regionWrap);
-                     filtersContainer.appendChild(budgetWrap);
-
-                     // Sync listeners for mobile inputs
-                     document.getElementById('mobileRegionInput').addEventListener('change', (e) => {
-                         document.getElementById('regionInput').value = e.target.value;
-                         filterData(true);
-                     });
-                     document.getElementById('mobileBudgetToggle').addEventListener('change', (e) => {
-                         document.getElementById('budgetToggle').checked = e.target.checked;
-                         filterData(true);
-                     });
-                     // Re-attach level clicks handled globally by IDs
-                }
-
-                sheet.classList.remove('hidden');
-                setTimeout(() => {
-                    content.classList.remove('translate-y-full');
-                }, 10);
-            } else {
-                // Close
-                content.classList.add('translate-y-full');
-                setTimeout(() => {
-                    sheet.classList.add('hidden');
-                }, 300);
-            }
-        }
-
-        // === HELPERS ===
-        function getCatColor(cat) {
-            const c = cat.toLowerCase();
-            if (c.includes('it') || c.includes('информ')) return 'border-l-4 border-l-blue-500';
-            if (c.includes('педагог') || c.includes('образован')) return 'border-l-4 border-l-orange-400';
-            if (c.includes('медиц') || c.includes('здоров')) return 'border-l-4 border-l-red-400';
-            if (c.includes('инжен') || c.includes('техн')) return 'border-l-4 border-l-slate-500';
-            if (c.includes('эконом') || c.includes('управ')) return 'border-l-4 border-l-emerald-500';
-            if (c.includes('искусств') || c.includes('культур')) return 'border-l-4 border-l-purple-500';
-            return 'border-l-4 border-l-indigo-200';
-        }
-
-        function getCatIcon(cat) {
-            const c = cat.toLowerCase();
-            if (c.includes('it') || c.includes('информ')) return 'monitor';
-            if (c.includes('педагог') || c.includes('образован')) return 'book-open';
-            if (c.includes('медиц') || c.includes('здоров')) return 'activity';
-            if (c.includes('инжен') || c.includes('техн')) return 'wrench';
-            if (c.includes('эконом') || c.includes('управ')) return 'trending-up';
-            if (c.includes('искусств') || c.includes('культур')) return 'palette';
-            return 'graduation-cap';
-        }
-
-        function highlight(text, query) {
-            if (!query) return text;
-            const regex = new RegExp(`(${query})`, 'gi');
-            return text.replace(regex, '<mark class="bg-yellow-200 text-slate-900 rounded-sm px-0.5">$1</mark>');
-        }
-
-        // === FILTERS SETUP ===
-        function initFilters() {
+        function initUI() {
             // Levels
             const levels = [...new Set(allPrograms.map(p => p.level))].sort();
             const levelContainer = document.getElementById('levelButtons');
-            let levelHTML = `<button onclick="setLevel('all')" id="lvl-all" class="px-5 py-2 rounded-lg text-sm font-bold transition bg-rgsu-900 text-white shadow-md whitespace-nowrap">Все</button>`;
-            levels.forEach(l => {
-                const label = l === 'SPO' ? 'Колледж' : 'ВУЗ';
-                levelHTML += `<button onclick="setLevel('${l}')" id="lvl-${l}" class="px-5 py-2 rounded-lg text-sm font-medium transition text-slate-500 hover:bg-slate-200 whitespace-nowrap">${label}</button>`;
-            });
-            levelContainer.innerHTML = levelHTML;
+            if (levelContainer) {
+                let levelHTML = `<button onclick="setFilter('level', 'all')" id="lvl-all" class="px-5 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap">Все</button>`;
+                levels.forEach(l => {
+                    const label = l === 'SPO' ? 'Колледж' : 'ВУЗ';
+                    levelHTML += `<button onclick="setFilter('level', '${l}')" id="lvl-${l}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap">${label}</button>`;
+                });
+                levelContainer.innerHTML = levelHTML;
+            }
 
-            // Regions (Datalist)
+            // Regions Datalist
             const regions = [...new Set(allPrograms.map(p => p.region).filter(r => r && r !== "РФ"))].sort();
             const dl = document.getElementById('regions');
-            regions.forEach(r => dl.appendChild(new Option(r)));
+            if(dl) regions.forEach(r => dl.appendChild(new Option(r)));
 
-            // Popular Categories (Chips)
+            // Popular Categories
             const cats = allPrograms.map(p => p.cat);
             const counts = {};
             cats.forEach(x => { counts[x] = (counts[x] || 0) + 1; });
             const topCats = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
             
-            document.getElementById('popularFilters').innerHTML = topCats.map(c => 
-                `<button onclick="setSearch('${c}')" class="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white/90 hover:text-white transition cursor-pointer">${c}</button>`
-            ).join('');
-        }
-
-        // === LOGIC ===
-        function setLevel(lvl) {
-            currentLevel = lvl;
-            document.querySelectorAll('#levelButtons button, #mobileLevels button').forEach(b => {
-                const isActive = b.id === `lvl-${lvl}`;
-                b.className = isActive ? 
-                    "px-5 py-2 rounded-lg text-sm font-bold transition bg-rgsu-900 text-white shadow-md whitespace-nowrap" : 
-                    "px-5 py-2 rounded-lg text-sm font-medium transition text-slate-500 hover:bg-slate-200 whitespace-nowrap";
-            });
-            filterData(true);
-        }
-
-        function setSearch(val) {
-            const input = document.getElementById('searchInput');
-            input.value = val;
-            if (val) document.getElementById('clearSearchBtn').classList.remove('hidden');
-            filterData(true);
-        }
-
-        function toggleFavFilter() {
-            showFavorites = !showFavorites;
-            const btn = document.getElementById('favFilterBtn');
-            if (showFavorites) {
-                btn.classList.add('bg-red-50', 'border-red-200', 'text-red-600');
-                btn.classList.remove('text-slate-600', 'border-slate-200');
-            } else {
-                btn.classList.remove('bg-red-50', 'border-red-200', 'text-red-600');
-                btn.classList.add('text-slate-600', 'border-slate-200');
+            const popDiv = document.getElementById('popularFilters');
+            if(popDiv) {
+                popDiv.innerHTML = topCats.map(c => 
+                    `<button onclick="document.getElementById('searchInput').value='${c}'; updateFilters()" class="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0 duration-200">${c}</button>`
+                ).join('');
             }
-            filterData(true);
+
+            // Restore UI state
+            const searchInput = document.getElementById('searchInput');
+            if(searchInput) searchInput.value = filters.search;
+            
+            const regionInput = document.getElementById('regionInput');
+            if(regionInput) regionInput.value = filters.region;
+            
+            const budgetToggle = document.getElementById('budgetToggle');
+            if(budgetToggle) budgetToggle.checked = filters.budget;
+            
+            const sortSelect = document.getElementById('sortSelect');
+            if(sortSelect) sortSelect.value = filters.sort;
+            
+            if(filters.search) document.getElementById('clearSearchBtn')?.classList.remove('hidden');
+            if(filters.region) {
+                document.getElementById('clearRegionBtn')?.classList.remove('hidden');
+                document.getElementById('regionIcon')?.classList.add('hidden');
+            }
         }
 
-        function filterData(resetCount = false) {
-            if (resetCount) visibleCount = 21;
+        function updateURL() {
+            const params = new URLSearchParams();
+            if(filters.level !== 'all') params.set('level', filters.level);
+            if(filters.search) params.set('q', filters.search);
+            if(filters.region) params.set('region', filters.region);
+            if(filters.budget) params.set('budget', '1');
+            if(filters.sort !== 'default') params.set('sort', filters.sort);
             
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const reg = document.getElementById('regionInput').value;
-            const btn = document.getElementById('clearRegionBtn');
-            if (reg) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+            const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}${window.location.hash}`;
+            window.history.replaceState({}, '', newUrl);
+        }
 
-            const budgetOnly = document.getElementById('budgetToggle').checked;
+        function readURL() {
+            const params = new URLSearchParams(window.location.search);
+            if(params.has('level')) filters.level = params.get('level');
+            if(params.has('q')) filters.search = params.get('q');
+            if(params.has('region')) filters.region = params.get('region');
+            if(params.has('budget')) filters.budget = true;
+            if(params.has('sort')) filters.sort = params.get('sort');
+        }
+
+        function setFilter(key, value) {
+            filters[key] = value;
+            updateFilters();
+        }
+
+        function updateFilters() {
+            // Read values
+            const searchInput = document.getElementById('searchInput');
+            if(searchInput) filters.search = searchInput.value.toLowerCase();
+            
+            const regionInput = document.getElementById('regionInput');
+            if(regionInput) filters.region = regionInput.value;
+            
+            const budgetToggle = document.getElementById('budgetToggle');
+            if(budgetToggle) filters.budget = budgetToggle.checked;
+            
+            const sortSelect = document.getElementById('sortSelect');
+            if(sortSelect) filters.sort = sortSelect.value;
+            
+            // Sync UI
+            const regionBtn = document.getElementById('clearRegionBtn');
+            const regionIcon = document.getElementById('regionIcon');
+            if (filters.region) { 
+                regionBtn?.classList.remove('hidden'); 
+                regionIcon?.classList.add('hidden'); 
+            } else { 
+                regionBtn?.classList.add('hidden'); 
+                regionIcon?.classList.remove('hidden'); 
+            }
+
+            updateURL();
+            applyFilters(true);
+        }
+
+        function applyFilters(resetCount = false) {
+            if (resetCount) visibleCount = 21;
 
             filteredPrograms = allPrograms.filter(p => {
                 if (showFavorites && !favorites.includes(p.id)) return false;
                 
-                const matchSearch = p.title.toLowerCase().includes(q) || p.cat.toLowerCase().includes(q) || p.inst.toLowerCase().includes(q);
-                const matchLvl = currentLevel === 'all' || p.level === currentLevel;
-                const matchReg = !reg || p.region === reg;
-                const matchBudg = !budgetOnly || p.hasBudget;
+                const matchSearch = p.title.toLowerCase().includes(filters.search) || p.cat.toLowerCase().includes(filters.search) || p.inst.toLowerCase().includes(filters.search);
+                const matchLvl = filters.level === 'all' || p.level === filters.level;
+                const matchReg = !filters.region || p.region === filters.region;
+                const matchBudg = !filters.budget || p.hasBudget;
                 
                 return matchSearch && matchLvl && matchReg && matchBudg;
             });
 
-            renderGrid();
+            // Sorting
+            if (filters.sort === 'budget_desc') {
+                filteredPrograms.sort((a, b) => b.rawBudget - a.rawBudget);
+            } else if (filters.sort === 'name_asc') {
+                filteredPrograms.sort((a, b) => a.title.localeCompare(b.title));
+            } else if (filters.sort === 'region_asc') {
+                filteredPrograms.sort((a, b) => a.region.localeCompare(b.region));
+            }
+
+            renderUI();
         }
 
-        function renderGrid() {
+        function renderUI() {
+            // Update Level Buttons
+            document.querySelectorAll('#levelButtons button').forEach(b => {
+                const isActive = b.id === `lvl-${filters.level}`;
+                b.className = isActive ? 
+                    "px-5 py-2.5 rounded-xl text-sm font-bold transition bg-rgsu-900 text-white shadow-lg shadow-rgsu-900/20 whitespace-nowrap ring-2 ring-transparent focus:ring-rgsu-600 focus:ring-offset-2 dark:bg-blue-600 dark:shadow-none" : 
+                    "px-5 py-2.5 rounded-xl text-sm font-bold transition text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-rgsu-900 whitespace-nowrap focus:ring-2 focus:ring-rgsu-600 focus:ring-offset-2 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white";
+            });
+
+            // Active Chips
+            const chipsDiv = document.getElementById('activeFilters');
+            if(chipsDiv) {
+                let chipsHTML = '';
+                if (filters.region) chipsHTML += createChip(filters.region, () => { const ri = document.getElementById('regionInput'); if(ri) ri.value=''; updateFilters(); });
+                if (filters.budget) chipsHTML += createChip('Бюджет', () => { const bt = document.getElementById('budgetToggle'); if(bt) bt.checked=false; updateFilters(); });
+                if (filters.search) chipsHTML += createChip(`Поиск: ${filters.search}`, () => { clearSearch(); });
+                chipsDiv.innerHTML = chipsHTML;
+            }
+
+            // Results Count Safely
+            const resultsCountEl = document.getElementById('resultsCount');
+            if(resultsCountEl) resultsCountEl.innerText = `Найдено: ${filteredPrograms.length}`;
+
+            // Render Grid
             const grid = document.getElementById('catalogGrid');
             const loadMoreBtn = document.getElementById('loadMoreBtn');
-            const q = document.getElementById('searchInput').value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex
-
-            document.getElementById('resultsCount').innerText = `Найдено: ${filteredPrograms.length}`;
             
-            // Empty State
+            if(!grid) return;
+
+            const q = filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            
             if (filteredPrograms.length === 0) {
                 grid.innerHTML = `
-                    <div class="col-span-1 md:col-span-3 text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300">
-                        <div class="text-slate-400 mb-2"><i data-lucide="search-x" class="w-12 h-12 mx-auto"></i></div>
-                        <h3 class="text-lg font-bold text-slate-700">Ничего не найдено</h3>
-                        <p class="text-slate-500 mb-4">Попробуйте изменить параметры поиска</p>
-                        ${document.getElementById('regionInput').value ? `<button onclick="clearRegion()" class="text-rgsu-700 font-bold hover:underline">Сбросить регион</button>` : ''}
+                    <div class="col-span-1 md:col-span-3 text-center py-24 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+                        <div class="bg-slate-50 dark:bg-slate-700 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i data-lucide="search-x" class="w-10 h-10 text-slate-300 dark:text-slate-500"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Ничего не найдено</h3>
+                        <p class="text-slate-500 dark:text-slate-400 mb-6">Попробуйте изменить параметры</p>
+                        <button onclick="clearSearch(); document.getElementById('regionInput').value=''; updateFilters()" class="text-rgsu-700 dark:text-blue-400 font-bold hover:underline">Сбросить все</button>
                     </div>
                 `;
-                loadMoreBtn.classList.add('hidden');
+                if(loadMoreBtn) loadMoreBtn.classList.add('hidden');
                 lucide.createIcons();
                 return;
             }
 
             const dataToShow = filteredPrograms.slice(0, visibleCount);
             
-            grid.innerHTML = dataToShow.map(p => {
+            // Grouping Logic
+            let lastGroup = '';
+            let gridHTML = '';
+            
+            dataToShow.forEach(p => {
+                if (filters.sort === 'region_asc') {
+                    if (p.region !== lastGroup) {
+                        gridHTML += `<div class="col-span-1 md:col-span-2 lg:col-span-3 pt-4 pb-2"><h3 class="text-lg font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 pb-1">${p.region}</h3></div>`;
+                        lastGroup = p.region;
+                    }
+                }
+
                 const isFav = favorites.includes(p.id);
                 const isCompared = compareList.has(p.id);
                 
-                // Compact View Logic
                 const descHTML = isCompactMode ? '' : `
-                    <p class="text-xs text-slate-500 font-medium mb-3 uppercase tracking-wide flex items-center gap-1.5">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-3 uppercase tracking-wide flex items-center gap-1.5 opacity-80">
                        ${highlight(p.cat, q)}
                     </p>
                 `;
-                const paddingClass = isCompactMode ? 'p-4' : 'p-5';
+                const paddingClass = isCompactMode ? 'p-4' : 'p-6';
                 
-                return `
-                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg card-hover border border-slate-100 flex flex-col ${paddingClass} animate-fade-in relative transition-all duration-300 ${p.color}">
-                    <!-- Header Badges -->
-                    <div class="flex justify-between items-start mb-2">
+                gridHTML += `
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl card-hover border border-slate-100 dark:border-slate-700 flex flex-col ${paddingClass} animate-fade-in relative transition-all duration-300 ${p.color}">
+                    <div class="flex justify-between items-start mb-3">
                         <div class="flex flex-wrap gap-2">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</span>
-                            ${p.hasBudget ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-green-100 text-green-700 border border-green-200 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Бюджет</span>` : ''}
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'}">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</span>
+                            ${p.hasBudget ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 flex items-center gap-1.5 animate-pulse-soft"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Бюджет</span>` : ''}
                         </div>
-                        <button onclick="toggleFav(${p.id}, this)" class="text-slate-300 hover:text-red-500 transition hover:scale-110">
+                        <button onclick="toggleFav(${p.id}, this)" class="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 transition hover:scale-110 p-1 fav-btn-target">
                             <i data-lucide="heart" class="w-5 h-5 ${isFav ? 'fill-red-500 text-red-500' : ''}"></i>
                         </button>
                     </div>
 
-                    <!-- Content -->
-                    <div class="flex-grow cursor-pointer" onclick="openModal(${p.id})">
-                        <div class="flex justify-between items-start">
-                             <h3 class="font-bold text-slate-900 text-lg mb-1 leading-snug hover:text-rgsu-700 transition">${highlight(p.title, q)}</h3>
-                             <!-- Category Icon -->
-                             <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 ml-2">
-                                <i data-lucide="${p.icon}" class="w-4 h-4"></i>
+                    <div class="flex-grow cursor-pointer group" onclick="openModal(${p.id})">
+                        <div class="flex justify-between items-start mb-1">
+                             <h3 class="font-bold text-slate-900 dark:text-white text-lg leading-snug group-hover:text-rgsu-700 dark:group-hover:text-blue-400 transition duration-300">${highlight(p.title, q)}</h3>
+                             <div class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-300 shrink-0 ml-3 group-hover:bg-rgsu-50 dark:group-hover:bg-blue-900/30 group-hover:text-rgsu-600 dark:group-hover:text-blue-400 transition-colors duration-300">
+                                <i data-lucide="${p.icon}" class="w-5 h-5"></i>
                              </div>
                         </div>
                         ${descHTML}
-                        <p class="text-sm text-slate-700 font-medium flex items-center gap-1.5 mb-1"><i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400"></i> ${highlight(p.inst, q)}</p>
-                        <p class="text-sm text-slate-500 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> ${p.region}</p>
+                        <div class="space-y-1.5">
+                            <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold flex items-start gap-2"><i data-lucide="building-2" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i> ${highlight(p.inst, q)}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0"></i> ${p.region}</p>
+                        </div>
                     </div>
 
-                    <!-- Footer Actions -->
-                    <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
-                        <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-500 hover:text-rgsu-700 select-none">
-                            <input type="checkbox" class="rounded border-slate-300 text-rgsu-700 focus:ring-rgsu-600" ${isCompared ? 'checked' : ''} onchange="toggleCompare(${p.id})">
-                            Сравнить
+                    <div class="mt-6 pt-4 border-t border-slate-50 dark:border-slate-700 flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-400 hover:text-rgsu-700 dark:hover:text-blue-400 select-none transition-colors">
+                            <input type="checkbox" class="rounded border-slate-300 dark:border-slate-600 text-rgsu-700 focus:ring-rgsu-600 w-4 h-4 dark:bg-slate-700" ${isCompared ? 'checked' : ''} onchange="toggleCompare(${p.id})">
+                            СРАВНИТЬ
                         </label>
-                        <button onclick="openModal(${p.id})" class="text-rgsu-600 hover:text-rgsu-800 text-sm font-semibold flex items-center gap-1">
-                            Подробнее <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        <button onclick="openModal(${p.id})" class="text-rgsu-600 dark:text-blue-400 hover:text-rgsu-800 dark:hover:text-blue-300 text-sm font-bold flex items-center gap-1 group/btn">
+                            Подробнее <i data-lucide="chevron-right" class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform"></i>
                         </button>
                     </div>
                 </div>
-            `}).join('');
+            `;
+            });
 
-            if (visibleCount >= filteredPrograms.length) {
-                loadMoreBtn.classList.add('hidden');
-            } else {
-                loadMoreBtn.classList.remove('hidden');
-                loadMoreBtn.innerText = `Показать еще (${filteredPrograms.length - visibleCount})`;
+            grid.innerHTML = gridHTML;
+
+            if(loadMoreBtn) {
+                if (visibleCount >= filteredPrograms.length) {
+                    loadMoreBtn.classList.add('hidden');
+                } else {
+                    loadMoreBtn.classList.remove('hidden');
+                    loadMoreBtn.innerHTML = `<span>Загрузить еще (${filteredPrograms.length - visibleCount})</span> <i data-lucide="arrow-down" class="w-4 h-4"></i>`;
+                }
             }
             
             lucide.createIcons();
         }
 
-        // === USER ACTIONS ===
+        function createChip(label, onClick) {
+            return `<button class="bg-rgsu-50 dark:bg-blue-900/30 text-rgsu-700 dark:text-blue-300 px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-rgsu-100 dark:hover:bg-blue-900/50 transition font-medium" onclick="(${onClick})()">
+                ${label} <i data-lucide="x" class="w-3 h-3"></i>
+            </button>`;
+        }
+
+        function loadMore() {
+            const btn = document.getElementById('loadMoreBtn');
+            if(btn) {
+                btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Загрузка...`;
+                setTimeout(() => { visibleCount += 21; renderUI(); }, 300);
+            }
+        }
+
+        // === ACTIONS ===
         function toggleFav(id, btn) {
             const index = favorites.indexOf(id);
             if (index === -1) {
                 favorites.push(id);
                 showToast('Добавлено в избранное');
+                flyToFav(btn);
             } else {
                 favorites.splice(index, 1);
                 showToast('Удалено из избранного', 'info');
             }
             localStorage.setItem('rgsu_favs', JSON.stringify(favorites));
             
-            if (showFavorites) {
-                filterData();
-            } else {
+            if (showFavorites) { applyFilters(); } 
+            else {
                 const icon = btn.querySelector('svg');
-                if (favorites.includes(id)) {
-                    icon.classList.add('fill-red-500', 'text-red-500');
-                } else {
-                    icon.classList.remove('fill-red-500', 'text-red-500');
-                }
+                if (favorites.includes(id)) icon.classList.add('fill-red-500', 'text-red-500');
+                else icon.classList.remove('fill-red-500', 'text-red-500');
             }
+        }
+
+        function flyToFav(startBtn) {
+            const heart = startBtn.querySelector('svg').cloneNode(true);
+            const startRect = startBtn.getBoundingClientRect();
+            const target = document.getElementById('navHeartIcon');
+            if(!target) return;
+            const targetRect = target.getBoundingClientRect();
+            
+            heart.style.position = 'fixed';
+            heart.style.left = `${startRect.left}px`;
+            heart.style.top = `${startRect.top}px`;
+            heart.style.width = '20px';
+            heart.style.height = '20px';
+            heart.style.zIndex = '100';
+            heart.style.pointerEvents = 'none';
+            heart.classList.add('text-red-500', 'fill-red-500');
+            
+            const tx = targetRect.left - startRect.left;
+            const ty = targetRect.top - startRect.top;
+            
+            heart.style.setProperty('--tx', `${tx}px`);
+            heart.style.setProperty('--ty', `${ty}px`);
+            heart.style.animation = 'flyToCart 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards';
+            
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 800);
         }
 
         function toggleCompare(id) {
@@ -660,21 +691,17 @@
             } else {
                 if(compareList.size >= 4) {
                     showToast('Максимум 4 программы', 'info');
-                    // Uncheck current
-                    setTimeout(() => renderGrid(), 50); // lazy re-render to uncheck
+                    setTimeout(renderUI, 50);
                     return;
                 }
                 compareList.add(id);
                 showToast('Добавлено к сравнению');
             }
-            
             const bar = document.getElementById('compareBar');
-            const count = document.getElementById('compareCount');
-            
             if (compareList.size > 0) {
                 bar.classList.remove('hidden');
                 bar.classList.add('flex');
-                count.innerText = `${compareList.size} выбрано`;
+                document.getElementById('compareCount').innerText = compareList.size;
             } else {
                 bar.classList.add('hidden');
                 bar.classList.remove('flex');
@@ -684,133 +711,116 @@
         function clearCompare() {
             compareList.clear();
             toggleCompare(0); 
-            renderGrid();
+            renderUI();
         }
 
-        // === COMPARE MODAL (Smart Diff) ===
-        function openCompareModal() {
-            const items = allPrograms.filter(p => compareList.has(p.id));
-            if (items.length === 0) return;
-
-            // Define keys to compare
-            const keys = [
-                { label: "Уровень", val: p => p.level === 'VO' ? 'ВУЗ' : 'Колледж' },
-                { label: "Регион", val: p => p.region },
-                { label: "Бюджет", val: p => p.places },
-                { label: "Код", val: p => p.code },
-                { label: "Категория", val: p => p.cat }
-            ];
-
-            const renderRow = (k) => {
-                const values = items.map(p => k.val(p));
-                const uniqueValues = new Set(values);
-                const isDiff = uniqueValues.size > 1; // If more than 1 unique value, mark row
-                
-                return `
-                    <tr class="${isDiff ? 'diff-row' : ''}">
-                        <td class="p-3 border-b font-semibold text-slate-500">${k.label}</td>
-                        ${items.map(p => `<td class="p-3 border-b">${k.val(p)}</td>`).join('')}
-                    </tr>
-                `;
-            };
-
-            let html = `
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr>
-                            <th class="p-3 border-b-2 border-slate-100 min-w-[150px]">Параметр</th>
-                            ${items.map(p => `<th class="p-3 border-b-2 border-slate-100 min-w-[220px] bg-slate-50/50 align-top">
-                                <div class="text-sm font-bold text-slate-900 leading-tight mb-1">${p.title}</div>
-                                <div class="text-xs font-normal text-slate-500">${p.inst}</div>
-                            </th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm">
-                        ${keys.map(k => renderRow(k)).join('')}
-                        <tr>
-                            <td class="p-3 border-b font-semibold text-slate-500"></td>
-                            ${items.map(p => `<td class="p-3 border-b"><a href="${p.url}" target="_blank" class="text-blue-600 underline">На сайт</a></td>`).join('')}
-                        </tr>
-                    </tbody>
-                </table>
-            `;
-            document.getElementById('compareContent').innerHTML = html;
-            document.getElementById('compareModal').classList.remove('hidden');
+        // === HELPERS ===
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        function clearSearch() { 
+            const el = document.getElementById('searchInput'); 
+            if(el) el.value = ''; 
+            updateFilters(); 
+        }
+        function clearRegion() { 
+            const el = document.getElementById('regionInput'); 
+            if(el) el.value = ''; 
+            updateFilters(); 
+        }
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if(!container) return;
+            const toast = document.createElement('div');
+            const icon = type === 'success' ? 'check-circle' : 'info';
+            const color = type === 'success' ? 'bg-emerald-600' : 'bg-slate-800 dark:bg-slate-700';
+            toast.className = `${color} text-white px-5 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-toast pointer-events-auto min-w-[240px] border border-white/10 backdrop-blur-md`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i> <span class="text-sm font-bold tracking-wide">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        // === DETAIL MODAL ===
+        function highlight(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-500/50 dark:text-white text-slate-900 rounded-sm px-0.5">$1</mark>');
+        }
+
+        function toggleCompactMode() {
+            isCompactMode = !isCompactMode;
+            const btn = document.getElementById('compactToggleBtn');
+            if(btn) {
+                if (isCompactMode) btn.classList.add('text-rgsu-700', 'bg-slate-100', 'dark:bg-slate-700', 'dark:text-white');
+                else btn.classList.remove('text-rgsu-700', 'bg-slate-100', 'dark:bg-slate-700', 'dark:text-white');
+            }
+            renderUI();
+        }
+
+        function getCatColor(cat) {
+            const c = cat.toLowerCase();
+            if (c.includes('it')) return 'border-l-4 border-l-blue-500 dark:border-l-blue-400';
+            if (c.includes('педагог')) return 'border-l-4 border-l-orange-400';
+            if (c.includes('медиц')) return 'border-l-4 border-l-red-400';
+            if (c.includes('инжен')) return 'border-l-4 border-l-slate-500 dark:border-l-slate-400';
+            return 'border-l-4 border-l-indigo-200 dark:border-l-indigo-700';
+        }
+        function getCatIcon(cat) {
+            const c = cat.toLowerCase();
+            if (c.includes('it')) return 'monitor';
+            if (c.includes('педагог')) return 'book-open';
+            if (c.includes('медиц')) return 'activity';
+            return 'graduation-cap';
+        }
+
+        // === MODALS ===
         function openModal(id) {
             const p = allPrograms.find(x => x.id === id);
             if (!p) return;
+            try { window.location.hash = `program=${id}`; } catch (e) {}
             
-            // Safe URL hash update
-            try {
-                window.location.hash = `program=${id}`;
-            } catch (e) {
-                console.warn("Could not set URL hash", e);
-            }
-            
-            const isFav = favorites.includes(p.id);
-
             document.getElementById('modalContent').innerHTML = `
-                <div class="flex justify-between items-start mb-6">
-                    <div class="flex items-start gap-4">
-                        <div class="w-14 h-14 bg-rgsu-50 rounded-xl flex items-center justify-center text-rgsu-700 shrink-0 shadow-inner">
+                <div class="flex justify-between items-start mb-8">
+                    <div class="flex items-start gap-5">
+                        <div class="w-16 h-16 bg-gradient-to-br from-rgsu-50 to-white dark:from-slate-700 dark:to-slate-800 border border-rgsu-100 dark:border-slate-600 rounded-2xl flex items-center justify-center text-rgsu-700 dark:text-blue-300 shrink-0 shadow-lg shadow-rgsu-900/5">
                             <i data-lucide="${p.icon}" class="w-8 h-8"></i>
                         </div>
                         <div>
-                            <div class="flex gap-2 mb-2">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-slate-100 text-slate-600">${p.level === 'VO' ? 'Высшее' : 'СПО'}</span>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-slate-100 text-slate-600 font-mono">${p.code}</span>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 tracking-wide">${p.level === 'VO' ? 'Высшее' : 'СПО'}</span>
+                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-mono tracking-wide">${p.code}</span>
                             </div>
-                            <h2 class="text-2xl font-bold leading-tight text-slate-900 mb-1">${p.title}</h2>
-                            <p class="text-rgsu-700 font-bold text-lg">${p.inst}</p>
+                            <h2 class="text-2xl sm:text-3xl font-extrabold leading-tight text-slate-900 dark:text-white mb-2">${p.title}</h2>
+                            <p class="text-rgsu-700 dark:text-blue-400 font-bold text-lg flex items-center gap-2"><i data-lucide="building-2" class="w-5 h-5"></i> ${p.inst}</p>
                         </div>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">Места и Бюджет</div>
-                        <div class="font-bold text-slate-800 text-lg">${p.places}</div>
-                        ${p.hasBudget ? '<div class="text-xs text-green-600 mt-1 flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Есть бюджетные места</div>' : ''}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                    <div class="bg-blue-50/50 dark:bg-slate-900 p-5 rounded-2xl border border-blue-100 dark:border-slate-600">
+                        <div class="text-xs text-blue-400 uppercase font-bold mb-1 tracking-wider">Места и Бюджет</div>
+                        <div class="font-bold text-slate-800 dark:text-white text-lg">${p.places}</div>
+                        ${p.hasBudget ? '<div class="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1.5 font-bold bg-green-100 dark:bg-green-900/30 w-fit px-2 py-1 rounded-md"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Бюджетные места</div>' : ''}
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                        <div class="text-xs text-slate-400 uppercase font-bold mb-1">Локация</div>
-                        <div class="font-bold text-slate-800 text-lg">${p.region}</div>
+                    <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-600">
+                        <div class="text-xs text-slate-400 uppercase font-bold mb-1 tracking-wider">Локация</div>
+                        <div class="font-bold text-slate-800 dark:text-white text-lg flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i> ${p.region}</div>
                     </div>
                 </div>
-
-                <div class="prose prose-sm text-slate-600 mb-8 bg-white p-1">
-                    <h4 class="font-bold text-slate-900 mb-2">Описание программы</h4>
-                    <p>${p.desc}</p>
-                    <p class="mt-2 text-xs text-slate-400">Категория: ${p.cat}</p>
+                <div class="prose prose-sm text-slate-600 dark:text-slate-300 mb-8 bg-white dark:bg-transparent p-2">
+                    <h4 class="font-bold text-slate-900 dark:text-white mb-3 text-lg">О программе</h4>
+                    <p class="leading-relaxed text-base">${p.desc}</p>
                 </div>
-
-                <div class="flex gap-3 sticky bottom-0 bg-white pt-2 border-t border-slate-100 items-center">
-                    <a href="${p.url}" target="_blank" class="flex-grow text-center bg-rgsu-700 text-white py-3.5 rounded-xl font-bold hover:bg-rgsu-800 transition shadow-lg shadow-blue-900/10 flex justify-center items-center gap-2">
+                <div class="flex gap-3 sticky bottom-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm pt-4 pb-2 border-t border-slate-100 dark:border-slate-700 items-center -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <a href="${p.url}" target="_blank" class="flex-grow text-center bg-rgsu-700 hover:bg-rgsu-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition shadow-lg flex justify-center items-center gap-2 active:scale-[0.98]">
                         Перейти на сайт <i data-lucide="external-link" class="w-4 h-4"></i>
                     </a>
-                    
-                    <button onclick="copyLink(${p.id})" class="w-14 h-14 flex items-center justify-center border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600" title="Поделиться">
-                        <i data-lucide="share-2" class="w-6 h-6"></i>
-                    </button>
-                    
-                    <button onclick="toggleFav(${p.id}, this)" class="w-14 h-14 flex items-center justify-center border border-slate-200 rounded-xl hover:bg-slate-50">
-                        <i data-lucide="heart" class="w-6 h-6 ${isFav ? 'fill-red-500 text-red-500' : 'text-slate-400'}"></i>
+                    <button onclick="toggleFav(${p.id}, this)" class="w-14 h-14 flex items-center justify-center border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                        <i data-lucide="heart" class="w-6 h-6 ${favorites.includes(p.id) ? 'fill-red-500 text-red-500' : 'text-slate-400'}"></i>
                     </button>
                 </div>
             `;
-            
             const m = document.getElementById('modal');
             m.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            
-            setTimeout(() => { 
-                m.querySelector('.bg-slate-900\\/60').classList.remove('opacity-0');
-                document.getElementById('modalPanel').classList.remove('scale-95', 'opacity-0');
-                document.getElementById('modalPanel').classList.add('scale-100', 'opacity-100');
-            }, 10);
+            setTimeout(() => { m.querySelector('div').classList.remove('opacity-0'); document.getElementById('modalPanel').classList.remove('scale-95', 'opacity-0'); document.getElementById('modalPanel').classList.add('scale-100', 'opacity-100'); }, 10);
             lucide.createIcons();
         }
 
@@ -818,20 +828,28 @@
             const m = document.getElementById('modal');
             document.getElementById('modalPanel').classList.remove('scale-100', 'opacity-100');
             document.getElementById('modalPanel').classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-                m.classList.add('hidden');
-                document.body.style.overflow = '';
-                
-                // Safe URL reset
-                try {
-                    window.location.hash = '';
-                } catch(e) {
-                    console.warn("Could not reset hash", e);
-                }
-            }, 200);
+            setTimeout(() => { m.classList.add('hidden'); try{window.location.hash='';}catch(e){} }, 200);
         }
 
-        // Esc close
+        // === COMPARE ===
+        function openCompareModal() {
+            const items = allPrograms.filter(p => compareList.has(p.id));
+            if (items.length === 0) return;
+            const keys = [
+                { label: "Уровень", val: p => p.level === 'VO' ? 'ВУЗ' : 'Колледж' },
+                { label: "Регион", val: p => p.region },
+                { label: "Бюджет", val: p => p.places },
+                { label: "Категория", val: p => p.cat }
+            ];
+            const renderRow = (k) => {
+                const vals = items.map(p => k.val(p));
+                const isDiff = new Set(vals).size > 1;
+                return `<tr class="${isDiff ? 'diff-row' : ''}"><td class="p-4 border-b dark:border-slate-700 font-semibold text-slate-500 dark:text-slate-400 sticky left-0 bg-white dark:bg-slate-900 shadow-md z-10 text-sm">${k.label}</td>${items.map(p => `<td class="p-4 border-b dark:border-slate-700 min-w-[200px] text-sm text-slate-700 dark:text-slate-300">${k.val(p)}</td>`).join('')}</tr>`;
+            };
+            document.getElementById('compareContent').innerHTML = `<table class="w-full text-left border-collapse"><thead><tr><th class="p-4 border-b-2 dark:border-slate-600 min-w-[150px] bg-slate-50 dark:bg-slate-800 sticky left-0 z-20 shadow-md text-slate-400 font-bold uppercase text-xs">Параметр</th>${items.map(p => `<th class="p-4 border-b-2 dark:border-slate-600 min-w-[240px] bg-slate-50/80 dark:bg-slate-800/80 align-top"><div class="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1 line-clamp-2">${p.title}</div></th>`).join('')}</tr></thead><tbody>${keys.map(k => renderRow(k)).join('')}</tbody></table>`;
+            document.getElementById('compareModal').classList.remove('hidden');
+        }
+
         document.addEventListener('keydown', e => { if(e.key === "Escape") { closeModal(); document.getElementById('compareModal').classList.add('hidden'); } });
     </script>
 </body>

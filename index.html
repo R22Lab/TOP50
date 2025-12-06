@@ -102,11 +102,17 @@
                     <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
                     <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
                 </button>
-                <button onclick="toggleFavFilter()" id="favFilterBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 hover:bg-red-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-all text-sm font-medium relative group active:scale-95">
-                    <i data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125" id="navHeartIcon"></i> <span class="hidden sm:inline">Избранное</span>
-                    <!-- Favorites Badge -->
-                    <span id="favCountBadge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm hidden badge-pop">0</span>
-                </button>
+                <div class="relative">
+                    <button onclick="toggleFavFilter()" id="favFilterBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 hover:bg-red-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-all text-sm font-medium relative group active:scale-95">
+                        <i data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125" id="navHeartIcon"></i> <span class="hidden sm:inline">Избранное</span>
+                        <!-- Favorites Badge -->
+                        <span id="favCountBadge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm hidden badge-pop">0</span>
+                    </button>
+                    <!-- Export Button (Shows only when favorites active) -->
+                    <button onclick="exportFavorites()" id="exportFavBtn" class="absolute top-12 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-3 w-48 text-left text-sm hidden animate-fade-in z-50 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700">
+                        <i data-lucide="copy" class="w-4 h-4 text-slate-400"></i> Скопировать список
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -118,15 +124,29 @@
         
         <div class="relative z-10 max-w-4xl mx-auto animate-fade-in">
             <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Найди свою <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">профессию</span></h2>
-            <p class="text-slate-300 mb-10 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">Единый реестр программ переподготовки и высшего образования для участников СВО и их семей.</p>
             
+            <!-- Animated Stats -->
+            <div class="flex justify-center gap-6 mb-8 text-white/80 text-xs sm:text-sm font-medium">
+                <div class="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full backdrop-blur-sm border border-white/10">
+                    <span class="text-accent font-bold text-lg" id="statsPrograms">0</span> Программ
+                </div>
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full backdrop-blur-sm border border-white/10">
+                    <span class="text-blue-300 font-bold text-lg" id="statsUnis">0</span> ВУЗов
+                </div>
+            </div>
+
             <div class="relative max-w-xl mx-auto z-50">
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-2 flex gap-2 ring-4 ring-white/10 dark:ring-slate-700/50 transition-all duration-300" id="searchContainer">
                     <div class="flex-grow flex items-center px-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl relative group focus-within:ring-2 focus-within:ring-rgsu-600 transition-all">
                         <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-rgsu-600 transition-colors"></i>
-                        <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3.5 outline-none bg-transparent text-sm pr-8 placeholder:text-slate-400 dark:text-white" onfocus="focusSearch()">
+                        <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3.5 outline-none bg-transparent text-sm pr-8 placeholder:text-slate-400 dark:text-white" onfocus="focusSearch()" onblur="setTimeout(blurSearch, 200)">
                         <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
+                </div>
+                <!-- Search History Dropdown -->
+                <div id="searchHistoryDropdown" class="absolute top-full left-2 right-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl mt-2 overflow-hidden hidden z-50 border border-slate-100 dark:border-slate-700 text-left">
+                    <div class="px-4 py-2 text-xs text-slate-400 font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900/50">История поиска</div>
+                    <div id="historyList"></div>
                 </div>
             </div>
             
@@ -285,6 +305,7 @@
         let visibleCount = 21;
         let showFavorites = false;
         let isCompactMode = false;
+        let searchHistory = JSON.parse(localStorage.getItem('rgsu_search_history') || '[]');
         
         // Initial Filter State
         const initialState = {
@@ -306,14 +327,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             
-            // IMPROVEMENT 3: View Persistence
             const savedView = localStorage.getItem('rgsu_view_mode');
             if(savedView === 'compact') isCompactMode = true;
-            toggleCompactMode(false); // Apply without render initially
+            toggleCompactMode(false); 
 
-            readURL(); // Load filters from URL
+            readURL(); 
             loadData();
-            updateFavBadge(); // Set initial badge
+            updateFavBadge(); 
             
             // Hero Parallax
             document.addEventListener('mousemove', (e) => {
@@ -339,7 +359,7 @@
                 else btn.classList.add('translate-y-10', 'opacity-0');
             });
 
-            // IMPROVEMENT 1: Infinite Scroll
+            // Infinite Scroll
             const observer = new IntersectionObserver((entries) => {
                 if(entries[0].isIntersecting) {
                     loadMore();
@@ -355,16 +375,73 @@
             if (e.target.value) btn.classList.remove('hidden'); else btn.classList.add('hidden');
             updateFilters(); 
         });
+        
+        // Search History Input Handler
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveSearchHistory(e.target.value);
+                document.getElementById('searchInput').blur();
+            }
+        });
 
-        // === UI HELPERS: Search Focus ===
+        // === UI HELPERS: Search Focus & History ===
         function focusSearch() {
             document.getElementById('searchOverlay').classList.add('active');
             document.getElementById('searchContainer').classList.add('relative', 'z-50', 'scale-105');
+            renderSearchHistory();
         }
 
         function blurSearch() {
             document.getElementById('searchOverlay').classList.remove('active');
             document.getElementById('searchContainer').classList.remove('relative', 'z-50', 'scale-105');
+            document.getElementById('searchHistoryDropdown').classList.add('hidden');
+        }
+
+        function saveSearchHistory(term) {
+            if (!term || term.length < 3) return;
+            if (!searchHistory.includes(term)) {
+                searchHistory.unshift(term);
+                if (searchHistory.length > 5) searchHistory.pop();
+                localStorage.setItem('rgsu_search_history', JSON.stringify(searchHistory));
+            }
+        }
+
+        function renderSearchHistory() {
+            const list = document.getElementById('historyList');
+            const dropdown = document.getElementById('searchHistoryDropdown');
+            if (searchHistory.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            list.innerHTML = searchHistory.map(term => `
+                <div class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 transition" onclick="setSearchFromHistory('${term}')">
+                    <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i> ${term}
+                </div>
+            `).join('');
+            dropdown.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function setSearchFromHistory(term) {
+            const input = document.getElementById('searchInput');
+            input.value = term;
+            document.getElementById('clearSearchBtn').classList.remove('hidden');
+            updateFilters();
+            blurSearch(); // Close overlay/dropdown
+        }
+
+        // === STATS ANIMATION ===
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
         }
 
         // === THEME ===
@@ -401,6 +478,9 @@
                     // Safe budget parsing
                     const budgetMatch = budget.match(/\d+/);
                     const rawBudget = budgetMatch ? parseInt(budgetMatch[0]) : (hasBudget ? 1 : 0);
+                    
+                    // Check for "2025" in text
+                    const isNew2025 = budget.includes('2025') || row['program_name'].includes('2025');
 
                     return {
                         id: i,
@@ -416,10 +496,17 @@
                         desc: `${row['program_name']}. ${macro}.`,
                         color: getCatColor(macro),
                         icon: getCatIcon(macro),
-                        rawBudget: rawBudget
+                        rawBudget: rawBudget,
+                        isNew: isNew2025
                     };
                 });
                 
+                // Animate Stats
+                const totalPrograms = allPrograms.length;
+                const totalUnis = new Set(allPrograms.map(p => p.inst)).size;
+                animateValue(document.getElementById("statsPrograms"), 0, totalPrograms, 1500);
+                animateValue(document.getElementById("statsUnis"), 0, totalUnis, 1500);
+
                 initUI();
                 applyFilters();
             } catch (e) {
@@ -597,7 +684,6 @@
             const q = filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             
             if (filteredPrograms.length === 0) {
-                // IMPROVEMENT 3: Rich Empty State
                 grid.innerHTML = `
                     <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 flex flex-col items-center animate-fade-in">
                         <div class="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 shadow-inner">
@@ -637,7 +723,7 @@
                 `;
                 const paddingClass = isCompactMode ? 'p-4' : 'p-6';
                 
-                // IMPROVEMENT 1: Staggered Animation Delay
+                // Staggered Animation Delay
                 const delay = Math.min(index * 50, 500); 
 
                 gridHTML += `
@@ -646,6 +732,7 @@
                         <div class="flex flex-wrap gap-2">
                             <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'}">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</span>
                             ${p.hasBudget ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 flex items-center gap-1.5 animate-pulse-soft"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Бюджет</span>` : ''}
+                            ${p.isNew ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800">New 2025</span>` : ''}
                         </div>
                         <button onclick="toggleFav(${p.id}, this)" class="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 transition hover:scale-110 p-1 fav-btn-target active:scale-90">
                             <i data-lucide="heart" class="w-5 h-5 ${isFav ? 'fill-red-500 text-red-500' : ''}"></i>
@@ -693,7 +780,6 @@
         }
 
         function createChip(label, onClick) {
-            // Function string trick for inline HTML, cleaner would be createElement
             return `<button class="bg-rgsu-50 dark:bg-blue-900/30 text-rgsu-700 dark:text-blue-300 px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-rgsu-100 dark:hover:bg-blue-900/50 transition font-medium animate-fade-in active:scale-95" onclick="(${onClick})()">
                 ${label} <i data-lucide="x" class="w-3 h-3"></i>
             </button>`;
@@ -708,12 +794,17 @@
         // === ACTIONS ===
         function updateFavBadge() {
             const badge = document.getElementById('favCountBadge');
+            const exportBtn = document.getElementById('exportFavBtn');
             if (favorites.length > 0) {
                 badge.innerText = favorites.length;
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
             }
+            
+            // Show export button if favorites view is active
+            if(showFavorites && favorites.length > 0) exportBtn.classList.remove('hidden');
+            else exportBtn.classList.add('hidden');
         }
 
         function toggleFav(id, btn) {
@@ -724,7 +815,10 @@
                 flyToFav(btn);
             } else {
                 favorites.splice(index, 1);
-                showToast('Удалено из избранного', 'info');
+                // Undo Toast
+                showToast('Удалено из избранного', 'info', true, () => {
+                    toggleFav(id, btn); // Undo action
+                });
             }
             localStorage.setItem('rgsu_favs', JSON.stringify(favorites));
             updateFavBadge();
@@ -754,7 +848,6 @@
             heart.style.pointerEvents = 'none';
             heart.classList.add('text-red-500', 'fill-red-500');
             
-            // Calculate vector
             const tx = targetRect.left - startRect.left;
             const ty = targetRect.top - startRect.top;
             
@@ -795,6 +888,14 @@
             toggleCompare(0); 
             renderUI();
         }
+        
+        function exportFavorites() {
+            const items = allPrograms.filter(p => favorites.includes(p.id));
+            if(items.length === 0) return;
+            
+            const text = items.map(p => `- ${p.title} (${p.level}) в ${p.inst}. ${p.region}.`).join('\n');
+            navigator.clipboard.writeText(text).then(() => showToast('Список скопирован!'));
+        }
 
         // === HELPERS ===
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -810,16 +911,32 @@
             updateFilters(); 
         }
         
-        function showToast(message, type = 'success') {
+        function showToast(message, type = 'success', hasUndo = false, undoCallback = null) {
             const container = document.getElementById('toastContainer');
             if(!container) return;
             const toast = document.createElement('div');
             const icon = type === 'success' ? 'check-circle' : 'info';
             const color = type === 'success' ? 'bg-emerald-600' : 'bg-slate-800 dark:bg-slate-700';
-            toast.className = `${color} text-white px-5 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-toast pointer-events-auto min-w-[240px] border border-white/10 backdrop-blur-md`;
-            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i> <span class="text-sm font-bold tracking-wide">${message}</span>`;
+            
+            toast.className = `${color} text-white px-5 py-4 rounded-xl shadow-xl flex items-center gap-3 animate-toast pointer-events-auto min-w-[240px] border border-white/10 backdrop-blur-md justify-between`;
+            
+            let html = `<div class="flex items-center gap-2"><i data-lucide="${icon}" class="w-5 h-5"></i> <span class="text-sm font-bold tracking-wide">${message}</span></div>`;
+            
+            if(hasUndo) {
+                html += `<button id="undoBtn" class="text-xs uppercase font-bold underline opacity-80 hover:opacity-100">Отмена</button>`;
+            }
+            
+            toast.innerHTML = html;
             container.appendChild(toast);
             lucide.createIcons();
+            
+            if(hasUndo && undoCallback) {
+                toast.querySelector('#undoBtn').onclick = () => {
+                    undoCallback();
+                    toast.remove();
+                };
+            }
+
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
 

@@ -17,8 +17,16 @@
                         rgsu: { 900: '#002C5F', 800: '#004080', 700: '#0054A6', 600: '#1A6BC2', 50: '#EAF4FF' },
                         accent: { DEFAULT: '#F2994A', hover: '#E68A3E' }
                     },
-                    animation: { 'fade-in': 'fadeIn 0.5s ease-out' },
-                    keyframes: { fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } } }
+                    animation: { 
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'toast': 'toastIn 0.3s ease-out forwards'
+                    },
+                    keyframes: { 
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(100%)' }, '100%': { transform: 'translateY(0)' } },
+                        toastIn: { '0%': { transform: 'translateX(100%)', opacity: '0' }, '100%': { transform: 'translateX(0)', opacity: '1' } }
+                    }
                 }
             }
         }
@@ -31,6 +39,10 @@
         @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         /* Checkbox custom style */
         .custom-checkbox:checked { background-color: #0054A6; border-color: #0054A6; background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e"); }
+        /* Sticky Offset for Filters */
+        .sticky-filters { position: sticky; top: 80px; z-index: 30; }
+        /* Highlight diff row in compare */
+        .diff-row { background-color: #FEF3C7; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-800">
@@ -61,9 +73,10 @@
             <p class="text-slate-300 mb-8 text-base md:text-lg max-w-2xl mx-auto">Единый реестр программ переподготовки и высшего образования для участников СВО и их семей.</p>
             
             <div class="relative max-w-xl mx-auto bg-white rounded-xl shadow-xl p-1.5 flex gap-2">
-                <div class="flex-grow flex items-center px-3 bg-slate-50 rounded-lg">
+                <div class="flex-grow flex items-center px-3 bg-slate-50 rounded-lg relative">
                     <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
-                    <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3 outline-none bg-transparent text-sm">
+                    <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3 outline-none bg-transparent text-sm pr-8">
+                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
                 </div>
             </div>
             
@@ -78,12 +91,12 @@
     <main class="max-w-7xl mx-auto px-4 -mt-6 pb-20 relative z-20 flex-grow w-full">
         
         <!-- Mobile Filter Toggle -->
-        <button onclick="toggleFilters()" class="md:hidden w-full bg-white mb-4 py-3 rounded-xl shadow-sm font-semibold text-rgsu-900 flex justify-center items-center gap-2">
+        <button onclick="toggleMobileSheet()" class="md:hidden w-full bg-white mb-4 py-3 rounded-xl shadow-sm font-semibold text-rgsu-900 flex justify-center items-center gap-2">
             <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Фильтры
         </button>
 
-        <!-- Controls Panel -->
-        <div id="filterPanel" class="hidden md:flex flex-col xl:flex-row bg-white rounded-2xl shadow-lg border border-slate-100 p-4 mb-6 gap-4 justify-between items-start xl:items-center">
+        <!-- Controls Panel (Sticky) -->
+        <div id="filterPanel" class="hidden md:flex sticky-filters flex-col xl:flex-row bg-white rounded-2xl shadow-lg border border-slate-100 p-4 mb-6 gap-4 justify-between items-start xl:items-center transition-all">
             
             <div class="flex flex-col md:flex-row gap-4 w-full xl:w-auto">
                 <!-- Levels -->
@@ -93,20 +106,28 @@
                 
                 <!-- Searchable Region Input -->
                 <div class="relative w-full md:w-64">
-                    <input list="regions" id="regionInput" placeholder="Введите регион..." onchange="filterData()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:border-rgsu-600 transition">
+                    <input list="regions" id="regionInput" placeholder="Введите регион..." onchange="filterData()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm outline-none focus:border-rgsu-600 transition pr-8">
+                    <button onclick="clearRegion()" id="clearRegionBtn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-3 h-3"></i></button>
                     <datalist id="regions">
                         <!-- JS Injected -->
                     </datalist>
                 </div>
             </div>
             
-            <div class="flex flex-wrap items-center gap-6 w-full xl:w-auto border-t xl:border-none pt-4 xl:pt-0">
-                <h3 class="text-xs font-bold uppercase text-slate-400" id="resultsCount">...</h3>
+            <div class="flex flex-wrap items-center gap-4 w-full xl:w-auto border-t xl:border-none pt-4 xl:pt-0">
+                <h3 class="text-xs font-bold uppercase text-slate-400 whitespace-nowrap" id="resultsCount">...</h3>
                 
                 <label class="flex items-center gap-2 cursor-pointer select-none">
                     <input type="checkbox" id="budgetToggle" class="custom-checkbox w-5 h-5 border-2 border-slate-300 rounded focus:ring-0 cursor-pointer appearance-none bg-white transition-all" onchange="filterData()">
                     <span class="text-sm font-medium text-slate-700">Только бюджет</span>
                 </label>
+
+                <div class="h-6 w-px bg-slate-200 mx-2 hidden sm:block"></div>
+
+                <!-- Compact View Toggle -->
+                <button onclick="toggleCompactMode()" id="compactToggleBtn" class="text-slate-400 hover:text-rgsu-700 transition" title="Компактный вид">
+                    <i data-lucide="align-justify" class="w-5 h-5"></i>
+                </button>
             </div>
         </div>
 
@@ -123,11 +144,32 @@
         </div>
     </main>
 
+    <!-- Scroll to Top Button -->
+    <button id="scrollTopBtn" onclick="scrollToTop()" class="fixed bottom-24 right-6 z-40 bg-white border border-slate-200 p-3 rounded-full shadow-lg text-slate-500 hover:text-rgsu-700 hover:shadow-xl transition-all hidden translate-y-10 opacity-0 duration-300" title="Наверх">
+        <i data-lucide="arrow-up" class="w-5 h-5"></i>
+    </button>
+
     <!-- Comparison Bar (Fixed Bottom) -->
-    <div id="compareBar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-rgsu-900 text-white px-6 py-3 rounded-full shadow-2xl z-40 hidden flex items-center gap-4 animate-fade-in">
+    <div id="compareBar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-rgsu-900 text-white px-6 py-3 rounded-full shadow-2xl z-40 hidden flex items-center gap-4 animate-fade-in backdrop-blur-md bg-rgsu-900/95 border border-white/10">
         <span class="font-bold text-sm" id="compareCount">0 выбрано</span>
         <button onclick="openCompareModal()" class="bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-full text-xs font-bold transition">Сравнить</button>
         <button onclick="clearCompare()" class="text-white/50 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Mobile Bottom Sheet (Filters) -->
+    <div id="mobileSheet" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="toggleMobileSheet()"></div>
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-6 shadow-2xl transform transition-transform duration-300 translate-y-full" id="mobileSheetContent">
+            <div class="w-12 h-1 bg-slate-200 rounded-full mx-auto mb-6"></div>
+            <h3 class="font-bold text-lg mb-4">Фильтры</h3>
+            <div id="mobileFiltersContainer" class="space-y-4">
+                <!-- Filters will be cloned here for mobile -->
+            </div>
+            <button onclick="toggleMobileSheet()" class="w-full bg-rgsu-700 text-white font-bold py-3.5 rounded-xl mt-6">Применить</button>
+        </div>
     </div>
 
     <!-- Modals -->
@@ -151,6 +193,9 @@
                     <h2 class="text-xl font-bold">Сравнение программ</h2>
                     <button onclick="document.getElementById('compareModal').classList.add('hidden')"><i data-lucide="x" class="w-6 h-6"></i></button>
                 </div>
+                <div class="bg-blue-50/50 p-2 rounded-lg mb-2 text-xs text-blue-700 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4"></i> Отличия выделены цветом
+                </div>
                 <div class="overflow-x-auto flex-grow">
                     <div id="compareContent" class="min-w-max"></div>
                 </div>
@@ -166,6 +211,7 @@
         let visibleCount = 21;
         let currentLevel = 'all';
         let showFavorites = false;
+        let isCompactMode = false;
         
         // State
         const favorites = JSON.parse(localStorage.getItem('rgsu_favs') || '[]');
@@ -175,8 +221,27 @@
         const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
         // === INITIALIZATION ===
-        document.addEventListener('DOMContentLoaded', loadData);
-        document.getElementById('searchInput').addEventListener('input', () => { filterData(true); });
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            
+            // Scroll Listener for "Back to Top"
+            window.addEventListener('scroll', () => {
+                const btn = document.getElementById('scrollTopBtn');
+                if (window.scrollY > 400) {
+                    btn.classList.remove('hidden', 'translate-y-10', 'opacity-0');
+                } else {
+                    btn.classList.add('translate-y-10', 'opacity-0');
+                    setTimeout(() => btn.classList.add('hidden'), 300);
+                }
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => { 
+            const btn = document.getElementById('clearSearchBtn');
+            if (e.target.value) btn.classList.remove('hidden');
+            else btn.classList.add('hidden');
+            filterData(true); 
+        });
 
         async function loadData() {
             try {
@@ -202,15 +267,166 @@
                         places: budget,
                         url: row['url'] || "#",
                         desc: `${row['program_name']}. ${macro}.`,
-                        color: getCatColor(macro)
+                        color: getCatColor(macro),
+                        icon: getCatIcon(macro)
                     };
                 });
                 
                 initFilters();
                 filterData(true);
+
+                // Open deep link if data ready
+                if (window.location.hash.startsWith('#program=')) {
+                    const id = parseInt(window.location.hash.split('=')[1]);
+                    // Wait a bit to ensure rendering
+                    setTimeout(() => {
+                        openModal(id);
+                    }, 500);
+                }
+
             } catch (e) {
                 console.error(e);
                 document.getElementById('catalogGrid').innerHTML = `<div class="col-span-3 text-center py-20 text-red-500 font-bold">Не удалось загрузить данные таблицы.</div>`;
+            }
+        }
+
+        // === UI HELPERS ===
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            filterData(true);
+        }
+
+        function clearRegion() {
+            document.getElementById('regionInput').value = '';
+            document.getElementById('clearRegionBtn').classList.add('hidden');
+            filterData(true);
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const icon = type === 'success' ? 'check-circle' : 'info';
+            const color = type === 'success' ? 'bg-emerald-600' : 'bg-slate-800';
+
+            toast.className = `${color} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 animate-toast pointer-events-auto min-w-[200px]`;
+            toast.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i> <span class="text-sm font-semibold">${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function copyLink(id) {
+            const url = `${window.location.origin}${window.location.pathname}#program=${id}`;
+            
+            // Robust Copy Fallback
+            const textArea = document.createElement("textarea");
+            textArea.value = url;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showToast('Ссылка скопирована');
+                } else {
+                    throw new Error('Fallback copy failed');
+                }
+            } catch (err) {
+                console.error('Copy failed', err);
+                showToast('Не удалось скопировать', 'info');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        function toggleCompactMode() {
+            isCompactMode = !isCompactMode;
+            const btn = document.getElementById('compactToggleBtn');
+            if (isCompactMode) {
+                btn.classList.add('text-rgsu-700', 'bg-slate-100', 'rounded');
+            } else {
+                btn.classList.remove('text-rgsu-700', 'bg-slate-100', 'rounded');
+            }
+            renderGrid();
+        }
+
+        // === MOBILE SHEET ===
+        function toggleMobileSheet() {
+            const sheet = document.getElementById('mobileSheet');
+            const content = document.getElementById('mobileSheetContent');
+            const filtersContainer = document.getElementById('mobileFiltersContainer');
+            
+            if (sheet.classList.contains('hidden')) {
+                // Open
+                // Clone filters if empty
+                if (filtersContainer.children.length === 0) {
+                     // Clone Levels
+                     const levels = document.getElementById('levelButtons').cloneNode(true);
+                     levels.id = "mobileLevels";
+                     levels.className = "flex gap-2 overflow-x-auto pb-2";
+                     
+                     // Clone Region
+                     const regionWrap = document.createElement('div');
+                     regionWrap.innerHTML = `<label class="block text-sm font-bold mb-2">Регион</label>`;
+                     const regionInput = document.getElementById('regionInput').cloneNode(true);
+                     regionInput.id = "mobileRegionInput";
+                     regionWrap.appendChild(regionInput);
+
+                     // Clone Budget
+                     const budgetWrap = document.createElement('div');
+                     budgetWrap.className = "flex items-center gap-3 pt-4 border-t border-slate-100";
+                     const budgetToggle = document.getElementById('budgetToggle').cloneNode(true);
+                     budgetToggle.id = "mobileBudgetToggle";
+                     budgetWrap.innerHTML = `<span class="text-sm font-bold">Только бюджет</span>`;
+                     budgetWrap.prepend(budgetToggle);
+
+                     filtersContainer.appendChild(levels);
+                     filtersContainer.appendChild(regionWrap);
+                     filtersContainer.appendChild(budgetWrap);
+
+                     // Sync listeners for mobile inputs
+                     document.getElementById('mobileRegionInput').addEventListener('change', (e) => {
+                         document.getElementById('regionInput').value = e.target.value;
+                         filterData(true);
+                     });
+                     document.getElementById('mobileBudgetToggle').addEventListener('change', (e) => {
+                         document.getElementById('budgetToggle').checked = e.target.checked;
+                         filterData(true);
+                     });
+                     // Re-attach level clicks handled globally by IDs
+                }
+
+                sheet.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.remove('translate-y-full');
+                }, 10);
+            } else {
+                // Close
+                content.classList.add('translate-y-full');
+                setTimeout(() => {
+                    sheet.classList.add('hidden');
+                }, 300);
             }
         }
 
@@ -226,16 +442,21 @@
             return 'border-l-4 border-l-indigo-200';
         }
 
+        function getCatIcon(cat) {
+            const c = cat.toLowerCase();
+            if (c.includes('it') || c.includes('информ')) return 'monitor';
+            if (c.includes('педагог') || c.includes('образован')) return 'book-open';
+            if (c.includes('медиц') || c.includes('здоров')) return 'activity';
+            if (c.includes('инжен') || c.includes('техн')) return 'wrench';
+            if (c.includes('эконом') || c.includes('управ')) return 'trending-up';
+            if (c.includes('искусств') || c.includes('культур')) return 'palette';
+            return 'graduation-cap';
+        }
+
         function highlight(text, query) {
             if (!query) return text;
             const regex = new RegExp(`(${query})`, 'gi');
             return text.replace(regex, '<mark class="bg-yellow-200 text-slate-900 rounded-sm px-0.5">$1</mark>');
-        }
-
-        function toggleFilters() {
-            const p = document.getElementById('filterPanel');
-            p.classList.toggle('hidden');
-            p.classList.toggle('flex');
         }
 
         // === FILTERS SETUP ===
@@ -269,7 +490,7 @@
         // === LOGIC ===
         function setLevel(lvl) {
             currentLevel = lvl;
-            document.querySelectorAll('#levelButtons button').forEach(b => {
+            document.querySelectorAll('#levelButtons button, #mobileLevels button').forEach(b => {
                 const isActive = b.id === `lvl-${lvl}`;
                 b.className = isActive ? 
                     "px-5 py-2 rounded-lg text-sm font-bold transition bg-rgsu-900 text-white shadow-md whitespace-nowrap" : 
@@ -279,7 +500,9 @@
         }
 
         function setSearch(val) {
-            document.getElementById('searchInput').value = val;
+            const input = document.getElementById('searchInput');
+            input.value = val;
+            if (val) document.getElementById('clearSearchBtn').classList.remove('hidden');
             filterData(true);
         }
 
@@ -301,6 +524,9 @@
             
             const q = document.getElementById('searchInput').value.toLowerCase();
             const reg = document.getElementById('regionInput').value;
+            const btn = document.getElementById('clearRegionBtn');
+            if (reg) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+
             const budgetOnly = document.getElementById('budgetToggle').checked;
 
             filteredPrograms = allPrograms.filter(p => {
@@ -331,7 +557,7 @@
                         <div class="text-slate-400 mb-2"><i data-lucide="search-x" class="w-12 h-12 mx-auto"></i></div>
                         <h3 class="text-lg font-bold text-slate-700">Ничего не найдено</h3>
                         <p class="text-slate-500 mb-4">Попробуйте изменить параметры поиска</p>
-                        ${document.getElementById('regionInput').value ? `<button onclick="document.getElementById('regionInput').value=''; filterData(true)" class="text-rgsu-700 font-bold hover:underline">Сбросить регион</button>` : ''}
+                        ${document.getElementById('regionInput').value ? `<button onclick="clearRegion()" class="text-rgsu-700 font-bold hover:underline">Сбросить регион</button>` : ''}
                     </div>
                 `;
                 loadMoreBtn.classList.add('hidden');
@@ -345,10 +571,18 @@
                 const isFav = favorites.includes(p.id);
                 const isCompared = compareList.has(p.id);
                 
+                // Compact View Logic
+                const descHTML = isCompactMode ? '' : `
+                    <p class="text-xs text-slate-500 font-medium mb-3 uppercase tracking-wide flex items-center gap-1.5">
+                       ${highlight(p.cat, q)}
+                    </p>
+                `;
+                const paddingClass = isCompactMode ? 'p-4' : 'p-5';
+                
                 return `
-                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg card-hover border border-slate-100 flex flex-col p-5 animate-fade-in relative transition-all duration-300 ${p.color}">
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-lg card-hover border border-slate-100 flex flex-col ${paddingClass} animate-fade-in relative transition-all duration-300 ${p.color}">
                     <!-- Header Badges -->
-                    <div class="flex justify-between items-start mb-3">
+                    <div class="flex justify-between items-start mb-2">
                         <div class="flex flex-wrap gap-2">
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</span>
                             ${p.hasBudget ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-green-100 text-green-700 border border-green-200 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Бюджет</span>` : ''}
@@ -360,14 +594,20 @@
 
                     <!-- Content -->
                     <div class="flex-grow cursor-pointer" onclick="openModal(${p.id})">
-                        <h3 class="font-bold text-slate-900 text-lg mb-1 leading-snug hover:text-rgsu-700 transition">${highlight(p.title, q)}</h3>
-                        <p class="text-xs text-slate-500 font-medium mb-3 uppercase tracking-wide">${highlight(p.cat, q)}</p>
+                        <div class="flex justify-between items-start">
+                             <h3 class="font-bold text-slate-900 text-lg mb-1 leading-snug hover:text-rgsu-700 transition">${highlight(p.title, q)}</h3>
+                             <!-- Category Icon -->
+                             <div class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 shrink-0 ml-2">
+                                <i data-lucide="${p.icon}" class="w-4 h-4"></i>
+                             </div>
+                        </div>
+                        ${descHTML}
                         <p class="text-sm text-slate-700 font-medium flex items-center gap-1.5 mb-1"><i data-lucide="building-2" class="w-3.5 h-3.5 text-slate-400"></i> ${highlight(p.inst, q)}</p>
                         <p class="text-sm text-slate-500 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i> ${p.region}</p>
                     </div>
 
                     <!-- Footer Actions -->
-                    <div class="mt-5 pt-3 border-t border-slate-50 flex items-center justify-between">
+                    <div class="mt-4 pt-3 border-t border-slate-50 flex items-center justify-between">
                         <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-500 hover:text-rgsu-700 select-none">
                             <input type="checkbox" class="rounded border-slate-300 text-rgsu-700 focus:ring-rgsu-600" ${isCompared ? 'checked' : ''} onchange="toggleCompare(${p.id})">
                             Сравнить
@@ -379,7 +619,6 @@
                 </div>
             `}).join('');
 
-            // Pagination Button State
             if (visibleCount >= filteredPrograms.length) {
                 loadMoreBtn.classList.add('hidden');
             } else {
@@ -390,26 +629,21 @@
             lucide.createIcons();
         }
 
-        function loadMore() {
-            visibleCount += 21;
-            renderGrid();
-        }
-
         // === USER ACTIONS ===
         function toggleFav(id, btn) {
             const index = favorites.indexOf(id);
             if (index === -1) {
                 favorites.push(id);
+                showToast('Добавлено в избранное');
             } else {
                 favorites.splice(index, 1);
+                showToast('Удалено из избранного', 'info');
             }
             localStorage.setItem('rgsu_favs', JSON.stringify(favorites));
             
-            // Если мы в режиме "Только избранное", нужно перерендерить всю сетку
             if (showFavorites) {
                 filterData();
             } else {
-                // Иначе просто обновить иконку для производительности
                 const icon = btn.querySelector('svg');
                 if (favorites.includes(id)) {
                     icon.classList.add('fill-red-500', 'text-red-500');
@@ -420,8 +654,19 @@
         }
 
         function toggleCompare(id) {
-            if (compareList.has(id)) compareList.delete(id);
-            else compareList.add(id);
+            if (compareList.has(id)) {
+                compareList.delete(id);
+                showToast('Убрано из сравнения', 'info');
+            } else {
+                if(compareList.size >= 4) {
+                    showToast('Максимум 4 программы', 'info');
+                    // Uncheck current
+                    setTimeout(() => renderGrid(), 50); // lazy re-render to uncheck
+                    return;
+                }
+                compareList.add(id);
+                showToast('Добавлено к сравнению');
+            }
             
             const bar = document.getElementById('compareBar');
             const count = document.getElementById('compareCount');
@@ -438,29 +683,54 @@
 
         function clearCompare() {
             compareList.clear();
-            toggleCompare(0); // Hide bar
-            renderGrid(); // Reset checkboxes
+            toggleCompare(0); 
+            renderGrid();
         }
 
+        // === COMPARE MODAL (Smart Diff) ===
         function openCompareModal() {
             const items = allPrograms.filter(p => compareList.has(p.id));
             if (items.length === 0) return;
+
+            // Define keys to compare
+            const keys = [
+                { label: "Уровень", val: p => p.level === 'VO' ? 'ВУЗ' : 'Колледж' },
+                { label: "Регион", val: p => p.region },
+                { label: "Бюджет", val: p => p.places },
+                { label: "Код", val: p => p.code },
+                { label: "Категория", val: p => p.cat }
+            ];
+
+            const renderRow = (k) => {
+                const values = items.map(p => k.val(p));
+                const uniqueValues = new Set(values);
+                const isDiff = uniqueValues.size > 1; // If more than 1 unique value, mark row
+                
+                return `
+                    <tr class="${isDiff ? 'diff-row' : ''}">
+                        <td class="p-3 border-b font-semibold text-slate-500">${k.label}</td>
+                        ${items.map(p => `<td class="p-3 border-b">${k.val(p)}</td>`).join('')}
+                    </tr>
+                `;
+            };
 
             let html = `
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr>
-                            <th class="p-3 border-b-2 border-slate-100 min-w-[200px]">Параметр</th>
-                            ${items.map(p => `<th class="p-3 border-b-2 border-slate-100 min-w-[250px] bg-slate-50/50">${p.title}<br><span class="text-xs font-normal text-slate-500">${p.inst}</span></th>`).join('')}
+                            <th class="p-3 border-b-2 border-slate-100 min-w-[150px]">Параметр</th>
+                            ${items.map(p => `<th class="p-3 border-b-2 border-slate-100 min-w-[220px] bg-slate-50/50 align-top">
+                                <div class="text-sm font-bold text-slate-900 leading-tight mb-1">${p.title}</div>
+                                <div class="text-xs font-normal text-slate-500">${p.inst}</div>
+                            </th>`).join('')}
                         </tr>
                     </thead>
                     <tbody class="text-sm">
-                        <tr><td class="p-3 border-b font-semibold text-slate-500">Уровень</td>${items.map(p => `<td class="p-3 border-b">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</td>`).join('')}</tr>
-                        <tr><td class="p-3 border-b font-semibold text-slate-500">Регион</td>${items.map(p => `<td class="p-3 border-b">${p.region}</td>`).join('')}</tr>
-                        <tr><td class="p-3 border-b font-semibold text-slate-500">Бюджет</td>${items.map(p => `<td class="p-3 border-b font-bold ${p.hasBudget ? 'text-green-600' : 'text-slate-400'}">${p.places}</td>`).join('')}</tr>
-                        <tr><td class="p-3 border-b font-semibold text-slate-500">Код</td>${items.map(p => `<td class="p-3 border-b font-mono text-xs">${p.code}</td>`).join('')}</tr>
-                        <tr><td class="p-3 border-b font-semibold text-slate-500">Категория</td>${items.map(p => `<td class="p-3 border-b">${p.cat}</td>`).join('')}</tr>
-                        <tr><td class="p-3 border-b font-semibold text-slate-500">Действие</td>${items.map(p => `<td class="p-3 border-b"><a href="${p.url}" target="_blank" class="text-blue-600 underline">На сайт</a></td>`).join('')}</tr>
+                        ${keys.map(k => renderRow(k)).join('')}
+                        <tr>
+                            <td class="p-3 border-b font-semibold text-slate-500"></td>
+                            ${items.map(p => `<td class="p-3 border-b"><a href="${p.url}" target="_blank" class="text-blue-600 underline">На сайт</a></td>`).join('')}
+                        </tr>
                     </tbody>
                 </table>
             `;
@@ -473,13 +743,20 @@
             const p = allPrograms.find(x => x.id === id);
             if (!p) return;
             
+            // Safe URL hash update
+            try {
+                window.location.hash = `program=${id}`;
+            } catch (e) {
+                console.warn("Could not set URL hash", e);
+            }
+            
             const isFav = favorites.includes(p.id);
 
             document.getElementById('modalContent').innerHTML = `
                 <div class="flex justify-between items-start mb-6">
                     <div class="flex items-start gap-4">
                         <div class="w-14 h-14 bg-rgsu-50 rounded-xl flex items-center justify-center text-rgsu-700 shrink-0 shadow-inner">
-                            <i data-lucide="${p.level === 'VO' ? 'graduation-cap' : 'book-open'}" class="w-8 h-8"></i>
+                            <i data-lucide="${p.icon}" class="w-8 h-8"></i>
                         </div>
                         <div>
                             <div class="flex gap-2 mb-2">
@@ -510,11 +787,16 @@
                     <p class="mt-2 text-xs text-slate-400">Категория: ${p.cat}</p>
                 </div>
 
-                <div class="flex gap-3 sticky bottom-0 bg-white pt-2 border-t border-slate-100">
+                <div class="flex gap-3 sticky bottom-0 bg-white pt-2 border-t border-slate-100 items-center">
                     <a href="${p.url}" target="_blank" class="flex-grow text-center bg-rgsu-700 text-white py-3.5 rounded-xl font-bold hover:bg-rgsu-800 transition shadow-lg shadow-blue-900/10 flex justify-center items-center gap-2">
-                        Перейти на сайт ВУЗа <i data-lucide="external-link" class="w-4 h-4"></i>
+                        Перейти на сайт <i data-lucide="external-link" class="w-4 h-4"></i>
                     </a>
-                    <button onclick="toggleFav(${p.id}, this)" class="w-14 flex items-center justify-center border border-slate-200 rounded-xl hover:bg-slate-50">
+                    
+                    <button onclick="copyLink(${p.id})" class="w-14 h-14 flex items-center justify-center border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600" title="Поделиться">
+                        <i data-lucide="share-2" class="w-6 h-6"></i>
+                    </button>
+                    
+                    <button onclick="toggleFav(${p.id}, this)" class="w-14 h-14 flex items-center justify-center border border-slate-200 rounded-xl hover:bg-slate-50">
                         <i data-lucide="heart" class="w-6 h-6 ${isFav ? 'fill-red-500 text-red-500' : 'text-slate-400'}"></i>
                     </button>
                 </div>
@@ -539,6 +821,13 @@
             setTimeout(() => {
                 m.classList.add('hidden');
                 document.body.style.overflow = '';
+                
+                // Safe URL reset
+                try {
+                    window.location.hash = '';
+                } catch(e) {
+                    console.warn("Could not reset hash", e);
+                }
             }, 200);
         }
 

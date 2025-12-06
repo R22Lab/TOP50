@@ -20,14 +20,14 @@
                         accent: { DEFAULT: '#F2994A', hover: '#E68A3E' }
                     },
                     animation: { 
-                        'fade-in': 'fadeIn 0.5s ease-out',
-                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
                         'toast': 'toastIn 0.3s ease-out forwards',
                         'pulse-soft': 'pulseSoft 2s infinite',
                         'fly': 'flyToCart 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards'
                     },
                     keyframes: { 
-                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
                         slideUp: { '0%': { transform: 'translateY(100%)' }, '100%': { transform: 'translateY(0)' } },
                         toastIn: { '0%': { transform: 'translateX(100%)', opacity: '0' }, '100%': { transform: 'translateX(0)', opacity: '1' } },
                         pulseSoft: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.7' } },
@@ -47,7 +47,8 @@
         .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .dark .glass-panel { background: rgba(15, 23, 42, 0.95); border-color: rgba(255,255,255,0.1); }
 
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 15px 30px -5px rgba(0, 44, 95, 0.1); }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 20px 25px -5px rgba(0, 44, 95, 0.15); }
         .dark .card-hover:hover { box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.5); border-color: #334155; }
 
         .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 0.5rem; }
@@ -58,6 +59,11 @@
         .sticky-filters { position: sticky; top: 80px; z-index: 30; }
         .diff-row { background-color: #FEF3C7; }
         .dark .diff-row { background-color: #383018; }
+        
+        /* Search Focus Overlay */
+        #searchOverlay { transition: opacity 0.3s ease, visibility 0.3s ease; }
+        #searchOverlay.active { opacity: 1; visibility: visible; }
+        
         .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
@@ -65,6 +71,9 @@
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-800 dark:text-slate-100 font-body transition-colors duration-300">
+
+    <!-- Search Focus Overlay -->
+    <div id="searchOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 opacity-0 invisible" onclick="blurSearch()"></div>
 
     <!-- Navbar -->
     <header class="fixed w-full top-0 z-50 glass-panel border-b border-slate-200/80 shadow-sm transition-all duration-300 dark:border-slate-800" id="navbar">
@@ -77,11 +86,11 @@
                 </div>
             </a>
             <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition">
+                <button onclick="toggleTheme()" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition active:scale-95">
                     <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
                     <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
                 </button>
-                <button onclick="toggleFavFilter()" id="favFilterBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 hover:bg-red-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-all text-sm font-medium relative group">
+                <button onclick="toggleFavFilter()" id="favFilterBtn" class="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500 hover:bg-red-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition-all text-sm font-medium relative group active:scale-95">
                     <i data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125" id="navHeartIcon"></i> <span class="hidden sm:inline">Избранное</span>
                 </button>
             </div>
@@ -95,18 +104,20 @@
         
         <div class="relative z-10 max-w-4xl mx-auto animate-fade-in">
             <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Найди свою <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">профессию</span></h2>
-            <p class="text-slate-300 mb-10 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">Единый реестр программ переподготовки и высшего образования для участников СВО и их семей. Государственная поддержка и бюджетные места.</p>
+            <p class="text-slate-300 mb-10 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">Единый реестр программ переподготовки и высшего образования для участников СВО и их семей.</p>
             
-            <div class="relative max-w-xl mx-auto bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-2 flex gap-2 ring-4 ring-white/10 dark:ring-slate-700/50">
-                <div class="flex-grow flex items-center px-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl relative group focus-within:ring-2 focus-within:ring-rgsu-600 transition-all">
-                    <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-rgsu-600 transition-colors"></i>
-                    <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3.5 outline-none bg-transparent text-sm pr-8 placeholder:text-slate-400 dark:text-white">
-                    <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <div class="relative max-w-xl mx-auto z-50">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-2 flex gap-2 ring-4 ring-white/10 dark:ring-slate-700/50 transition-all duration-300" id="searchContainer">
+                    <div class="flex-grow flex items-center px-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl relative group focus-within:ring-2 focus-within:ring-rgsu-600 transition-all">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-rgsu-600 transition-colors"></i>
+                        <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3.5 outline-none bg-transparent text-sm pr-8 placeholder:text-slate-400 dark:text-white" onfocus="focusSearch()">
+                        <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
                 </div>
             </div>
             
             <!-- Dynamic Chips -->
-            <div id="popularFilters" class="flex flex-wrap justify-center gap-2 mt-8 text-xs">
+            <div id="popularFilters" class="flex flex-wrap justify-center gap-2 mt-8 text-xs relative z-10">
                 <!-- JS injected -->
             </div>
         </div>
@@ -163,7 +174,7 @@
                     <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
 
                     <!-- Compact View Toggle -->
-                    <button onclick="toggleCompactMode()" id="compactToggleBtn" class="p-2 text-slate-400 hover:text-rgsu-700 hover:bg-slate-50 dark:hover:bg-slate-700 dark:hover:text-white rounded-lg transition" title="Компактный вид">
+                    <button onclick="toggleCompactMode()" id="compactToggleBtn" class="p-2 text-slate-400 hover:text-rgsu-700 hover:bg-slate-50 dark:hover:bg-slate-700 dark:hover:text-white rounded-lg transition active:scale-95" title="Компактный вид">
                         <i data-lucide="align-justify" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -194,7 +205,7 @@
     </button>
 
     <!-- Comparison Bar (Fixed Bottom) -->
-    <div id="compareBar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-rgsu-900/90 dark:bg-slate-800/90 text-white px-6 py-3 rounded-full shadow-2xl z-40 hidden flex items-center gap-4 animate-fade-in backdrop-blur-md border border-white/10 ring-1 ring-black/5">
+    <div id="compareBar" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-rgsu-900/90 dark:bg-slate-800/90 text-white px-6 py-3 rounded-full shadow-2xl z-40 hidden flex items-center gap-4 animate-fade-in backdrop-blur-md border border-white/10 ring-1 ring-black/5 active:scale-[0.99] transition-transform">
         <span class="font-bold text-sm flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-accent animate-pulse"></div> <span id="compareCount">0</span> выбрано</span>
         <div class="h-4 w-px bg-white/20"></div>
         <button onclick="openCompareModal()" class="bg-white/20 hover:bg-white/30 px-5 py-1.5 rounded-full text-xs font-bold transition uppercase tracking-wide">Сравнить</button>
@@ -304,6 +315,17 @@
             updateFilters(); 
         });
 
+        // === UI HELPERS: Search Focus ===
+        function focusSearch() {
+            document.getElementById('searchOverlay').classList.add('active');
+            document.getElementById('searchContainer').classList.add('relative', 'z-50', 'scale-105');
+        }
+
+        function blurSearch() {
+            document.getElementById('searchOverlay').classList.remove('active');
+            document.getElementById('searchContainer').classList.remove('relative', 'z-50', 'scale-105');
+        }
+
         // === THEME ===
         function initTheme() {
             if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -371,10 +393,10 @@
             const levels = [...new Set(allPrograms.map(p => p.level))].sort();
             const levelContainer = document.getElementById('levelButtons');
             if (levelContainer) {
-                let levelHTML = `<button onclick="setFilter('level', 'all')" id="lvl-all" class="px-5 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap">Все</button>`;
+                let levelHTML = `<button onclick="setFilter('level', 'all')" id="lvl-all" class="px-5 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap active:scale-95">Все</button>`;
                 levels.forEach(l => {
                     const label = l === 'SPO' ? 'Колледж' : 'ВУЗ';
-                    levelHTML += `<button onclick="setFilter('level', '${l}')" id="lvl-${l}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap">${label}</button>`;
+                    levelHTML += `<button onclick="setFilter('level', '${l}')" id="lvl-${l}" class="px-5 py-2.5 rounded-xl text-sm font-bold transition whitespace-nowrap active:scale-95">${label}</button>`;
                 });
                 levelContainer.innerHTML = levelHTML;
             }
@@ -393,7 +415,7 @@
             const popDiv = document.getElementById('popularFilters');
             if(popDiv) {
                 popDiv.innerHTML = topCats.map(c => 
-                    `<button onclick="document.getElementById('searchInput').value='${c}'; updateFilters()" class="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0 duration-200">${c}</button>`
+                    `<button onclick="document.getElementById('searchInput').value='${c}'; updateFilters()" class="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0 duration-200 active:scale-95">${c}</button>`
                 ).join('');
             }
 
@@ -503,8 +525,8 @@
             document.querySelectorAll('#levelButtons button').forEach(b => {
                 const isActive = b.id === `lvl-${filters.level}`;
                 b.className = isActive ? 
-                    "px-5 py-2.5 rounded-xl text-sm font-bold transition bg-rgsu-900 text-white shadow-lg shadow-rgsu-900/20 whitespace-nowrap ring-2 ring-transparent focus:ring-rgsu-600 focus:ring-offset-2 dark:bg-blue-600 dark:shadow-none" : 
-                    "px-5 py-2.5 rounded-xl text-sm font-bold transition text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-rgsu-900 whitespace-nowrap focus:ring-2 focus:ring-rgsu-600 focus:ring-offset-2 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white";
+                    "px-5 py-2.5 rounded-xl text-sm font-bold transition bg-rgsu-900 text-white shadow-lg shadow-rgsu-900/20 whitespace-nowrap ring-2 ring-transparent focus:ring-rgsu-600 focus:ring-offset-2 dark:bg-blue-600 dark:shadow-none active:scale-95" : 
+                    "px-5 py-2.5 rounded-xl text-sm font-bold transition text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 hover:text-rgsu-900 whitespace-nowrap focus:ring-2 focus:ring-rgsu-600 focus:ring-offset-2 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white active:scale-95";
             });
 
             // Active Chips
@@ -530,14 +552,15 @@
             const q = filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             
             if (filteredPrograms.length === 0) {
+                // IMPROVEMENT 3: Rich Empty State
                 grid.innerHTML = `
-                    <div class="col-span-1 md:col-span-3 text-center py-24 bg-white dark:bg-slate-800 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
-                        <div class="bg-slate-50 dark:bg-slate-700 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i data-lucide="search-x" class="w-10 h-10 text-slate-300 dark:text-slate-500"></i>
+                    <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 flex flex-col items-center animate-fade-in">
+                        <div class="w-32 h-32 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                            <svg class="w-16 h-16 text-slate-300 dark:text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="9" y1="14" x2="15" y2="14"></line></svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Ничего не найдено</h3>
-                        <p class="text-slate-500 dark:text-slate-400 mb-6">Попробуйте изменить параметры</p>
-                        <button onclick="clearSearch(); document.getElementById('regionInput').value=''; updateFilters()" class="text-rgsu-700 dark:text-blue-400 font-bold hover:underline">Сбросить все</button>
+                        <h3 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Пусто...</h3>
+                        <p class="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">По вашему запросу ничего не найдено. Попробуйте изменить фильтры или регион.</p>
+                        <button onclick="clearSearch(); document.getElementById('regionInput').value=''; updateFilters()" class="px-6 py-3 bg-rgsu-900 text-white rounded-xl font-bold shadow-lg hover:bg-rgsu-800 transition active:scale-95">Сбросить все фильтры</button>
                     </div>
                 `;
                 if(loadMoreBtn) loadMoreBtn.classList.add('hidden');
@@ -551,10 +574,10 @@
             let lastGroup = '';
             let gridHTML = '';
             
-            dataToShow.forEach(p => {
+            dataToShow.forEach((p, index) => {
                 if (filters.sort === 'region_asc') {
                     if (p.region !== lastGroup) {
-                        gridHTML += `<div class="col-span-1 md:col-span-2 lg:col-span-3 pt-4 pb-2"><h3 class="text-lg font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 pb-1">${p.region}</h3></div>`;
+                        gridHTML += `<div class="col-span-1 md:col-span-2 lg:col-span-3 pt-4 pb-2 animate-fade-in"><h3 class="text-lg font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700 pb-1">${p.region}</h3></div>`;
                         lastGroup = p.region;
                     }
                 }
@@ -569,14 +592,17 @@
                 `;
                 const paddingClass = isCompactMode ? 'p-4' : 'p-6';
                 
+                // IMPROVEMENT 1: Staggered Animation Delay
+                const delay = Math.min(index * 50, 500); 
+
                 gridHTML += `
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl card-hover border border-slate-100 dark:border-slate-700 flex flex-col ${paddingClass} animate-fade-in relative transition-all duration-300 ${p.color}">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl card-hover border border-slate-100 dark:border-slate-700 flex flex-col ${paddingClass} animate-fade-in relative transition-all duration-300 ${p.color}" style="animation-delay: ${delay}ms; opacity: 0;">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex flex-wrap gap-2">
                             <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'}">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</span>
                             ${p.hasBudget ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 flex items-center gap-1.5 animate-pulse-soft"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Бюджет</span>` : ''}
                         </div>
-                        <button onclick="toggleFav(${p.id}, this)" class="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 transition hover:scale-110 p-1 fav-btn-target">
+                        <button onclick="toggleFav(${p.id}, this)" class="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 transition hover:scale-110 p-1 fav-btn-target active:scale-90">
                             <i data-lucide="heart" class="w-5 h-5 ${isFav ? 'fill-red-500 text-red-500' : ''}"></i>
                         </button>
                     </div>
@@ -600,7 +626,7 @@
                             <input type="checkbox" class="rounded border-slate-300 dark:border-slate-600 text-rgsu-700 focus:ring-rgsu-600 w-4 h-4 dark:bg-slate-700" ${isCompared ? 'checked' : ''} onchange="toggleCompare(${p.id})">
                             СРАВНИТЬ
                         </label>
-                        <button onclick="openModal(${p.id})" class="text-rgsu-600 dark:text-blue-400 hover:text-rgsu-800 dark:hover:text-blue-300 text-sm font-bold flex items-center gap-1 group/btn">
+                        <button onclick="openModal(${p.id})" class="text-rgsu-600 dark:text-blue-400 hover:text-rgsu-800 dark:hover:text-blue-300 text-sm font-bold flex items-center gap-1 group/btn active:scale-95 transition">
                             Подробнее <i data-lucide="chevron-right" class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform"></i>
                         </button>
                     </div>
@@ -624,7 +650,7 @@
 
         function createChip(label, onClick) {
             // Function string trick for inline HTML, cleaner would be createElement
-            return `<button class="bg-rgsu-50 dark:bg-blue-900/30 text-rgsu-700 dark:text-blue-300 px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-rgsu-100 dark:hover:bg-blue-900/50 transition font-medium" onclick="(${onClick})()">
+            return `<button class="bg-rgsu-50 dark:bg-blue-900/30 text-rgsu-700 dark:text-blue-300 px-3 py-1 rounded-lg flex items-center gap-2 hover:bg-rgsu-100 dark:hover:bg-blue-900/50 transition font-medium animate-fade-in active:scale-95" onclick="(${onClick})()">
                 ${label} <i data-lucide="x" class="w-3 h-3"></i>
             </button>`;
         }
@@ -722,6 +748,7 @@
         function clearSearch() { 
             const el = document.getElementById('searchInput'); 
             if(el) el.value = ''; 
+            blurSearch();
             updateFilters(); 
         }
         function clearRegion() { 
@@ -781,6 +808,7 @@
             if (!p) return;
             try { window.location.hash = `program=${id}`; } catch (e) {}
             
+            // IMPROVEMENT 4: Smart Modal Badges
             document.getElementById('modalContent').innerHTML = `
                 <div class="flex justify-between items-start mb-8">
                     <div class="flex items-start gap-5">
@@ -789,8 +817,12 @@
                         </div>
                         <div>
                             <div class="flex flex-wrap gap-2 mb-3">
-                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 tracking-wide">${p.level === 'VO' ? 'Высшее' : 'СПО'}</span>
-                                <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 font-mono tracking-wide">${p.code}</span>
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 flex items-center gap-1">
+                                    <i data-lucide="graduation-cap" class="w-3 h-3"></i> ${p.level === 'VO' ? 'Высшее' : 'СПО'}
+                                </span>
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 font-mono flex items-center gap-1">
+                                    <i data-lucide="hash" class="w-3 h-3"></i> ${p.code}
+                                </span>
                             </div>
                             <h2 class="text-2xl sm:text-3xl font-extrabold leading-tight text-slate-900 dark:text-white mb-2">${p.title}</h2>
                             <p class="text-rgsu-700 dark:text-blue-400 font-bold text-lg flex items-center gap-2"><i data-lucide="building-2" class="w-5 h-5"></i> ${p.inst}</p>
@@ -799,13 +831,13 @@
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                     <div class="bg-blue-50/50 dark:bg-slate-900 p-5 rounded-2xl border border-blue-100 dark:border-slate-600">
-                        <div class="text-xs text-blue-400 uppercase font-bold mb-1 tracking-wider">Места и Бюджет</div>
-                        <div class="font-bold text-slate-800 dark:text-white text-lg">${p.places}</div>
-                        ${p.hasBudget ? '<div class="text-xs text-green-600 dark:text-green-400 mt-2 flex items-center gap-1.5 font-bold bg-green-100 dark:bg-green-900/30 w-fit px-2 py-1 rounded-md"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Бюджетные места</div>' : ''}
+                        <div class="text-xs text-blue-400 uppercase font-bold mb-2 tracking-wider">Места и Бюджет</div>
+                        <div class="font-bold text-slate-800 dark:text-white text-xl">${p.places}</div>
+                        ${p.hasBudget ? '<div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 font-bold text-sm"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Бюджет</div>' : ''}
                     </div>
                     <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-600">
-                        <div class="text-xs text-slate-400 uppercase font-bold mb-1 tracking-wider">Локация</div>
-                        <div class="font-bold text-slate-800 dark:text-white text-lg flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i> ${p.region}</div>
+                        <div class="text-xs text-slate-400 uppercase font-bold mb-2 tracking-wider">Локация</div>
+                        <div class="font-bold text-slate-800 dark:text-white text-xl flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5 text-slate-400"></i> ${p.region}</div>
                     </div>
                 </div>
                 <div class="prose prose-sm text-slate-600 dark:text-slate-300 mb-8 bg-white dark:bg-transparent p-2">
@@ -816,7 +848,7 @@
                     <a href="${p.url}" target="_blank" class="flex-grow text-center bg-rgsu-700 hover:bg-rgsu-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition shadow-lg flex justify-center items-center gap-2 active:scale-[0.98]">
                         Перейти на сайт <i data-lucide="external-link" class="w-4 h-4"></i>
                     </a>
-                    <button onclick="toggleFav(${p.id}, this)" class="w-14 h-14 flex items-center justify-center border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+                    <button onclick="toggleFav(${p.id}, this)" class="w-14 h-14 flex items-center justify-center border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition active:scale-95">
                         <i data-lucide="heart" class="w-6 h-6 ${favorites.includes(p.id) ? 'fill-red-500 text-red-500' : 'text-slate-400'}"></i>
                     </button>
                 </div>
@@ -853,7 +885,7 @@
             document.getElementById('compareModal').classList.remove('hidden');
         }
 
-        document.addEventListener('keydown', e => { if(e.key === "Escape") { closeModal(); document.getElementById('compareModal').classList.add('hidden'); } });
+        document.addEventListener('keydown', e => { if(e.key === "Escape") { closeModal(); document.getElementById('compareModal').classList.add('hidden'); blurSearch(); } });
     </script>
 </body>
 </html>

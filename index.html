@@ -25,7 +25,8 @@
                         'toast': 'toastIn 0.3s ease-out forwards',
                         'pulse-soft': 'pulseSoft 2s infinite',
                         'fly': 'flyToCart 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
-                        'shimmer': 'shimmer 2s linear infinite'
+                        'shimmer': 'shimmer 2s linear infinite',
+                        'confetti': 'confetti 0.6s ease-out forwards'
                     },
                     keyframes: { 
                         fadeIn: { '0%': { opacity: '0', transform: 'translateY(10px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
@@ -39,6 +40,10 @@
                         shimmer: {
                             '0%': { backgroundPosition: '-200% 0' },
                             '100%': { backgroundPosition: '200% 0' }
+                        },
+                        confetti: {
+                            '0%': { transform: 'translate(0,0) scale(1)', opacity: '1' },
+                            '100%': { transform: 'translate(var(--x), var(--y)) scale(0)', opacity: '0' }
                         }
                     }
                 }
@@ -88,12 +93,61 @@
             background-size: 200% 100%;
             animation: shimmer 3s infinite;
         }
+
+        /* Tooltip */
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            white-space: nowrap;
+            margin-bottom: 6px;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0;
+            animation: fadeIn 0.2s forwards;
+        }
+        .dark [data-tooltip]:hover::after { background: #cbd5e1; color: #0f172a; }
+        
+        .layout-list { grid-template-columns: 1fr !important; }
+        .layout-list .card-hover { flex-direction: row; align-items: center; padding: 1.5rem; }
+        .layout-list .card-img { display: none; }
+        @media (max-width: 640px) { .layout-list .card-hover { flex-direction: column; align-items: flex-start; } }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; color: black; }
+            #navbar, #heroSection, #filterPanel, #compareBar, #scrollTopBtn, .md\:hidden, #toastContainer { display: none !important; }
+            #modal { position: static; background: white; overflow: visible; height: auto; }
+            #modalPanel { box-shadow: none; border: none; transform: none !important; max-width: 100%; }
+            #modalContent { overflow: visible; max-height: none; padding: 0; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-800 dark:text-slate-100 font-body transition-colors duration-300 pb-20 md:pb-0">
 
     <!-- Search Focus Overlay -->
     <div id="searchOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 opacity-0 invisible" onclick="blurSearch()"></div>
+
+    <!-- Shortcuts Modal -->
+    <div id="shortcutsModal" class="fixed inset-0 z-[110] hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-fade-in" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="keyboard" class="w-5 h-5"></i> Горячие клавиши</h3>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between"><span>Поиск</span> <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 font-mono text-xs">/</kbd></div>
+                <div class="flex justify-between"><span>Закрыть</span> <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 font-mono text-xs">Esc</kbd></div>
+                <div class="flex justify-between"><span>Печать карточки</span> <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 font-mono text-xs">Ctrl + P</kbd></div>
+                <div class="flex justify-between"><span>Справка</span> <kbd class="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded border border-slate-300 dark:border-slate-600 font-mono text-xs">Shift + ?</kbd></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Navbar -->
     <header class="fixed w-full top-0 z-50 glass-panel border-b border-slate-200/80 shadow-sm transition-all duration-300 dark:border-slate-800" id="navbar">
@@ -106,7 +160,7 @@
                 </div>
             </a>
             <div class="flex items-center gap-3">
-                <button onclick="toggleTheme()" class="hidden md:block p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition active:scale-95">
+                <button onclick="toggleTheme()" class="hidden md:block p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition active:scale-95" data-tooltip="Сменить тему">
                     <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
                     <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
                 </button>
@@ -115,8 +169,8 @@
                         <i data-lucide="heart" class="w-4 h-4 transition-transform group-active:scale-125" id="navHeartIcon"></i> <span class="hidden sm:inline">Избранное</span>
                         <span id="favCountBadge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm hidden badge-pop">0</span>
                     </button>
-                    <button onclick="exportFavorites()" id="exportFavBtn" class="absolute top-12 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-3 w-48 text-left text-sm hidden animate-fade-in z-50 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700">
-                        <i data-lucide="copy" class="w-4 h-4 text-slate-400"></i> Скопировать список
+                    <button onclick="exportFavoritesCSV()" id="exportFavBtn" class="absolute top-12 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-3 w-48 text-left text-sm hidden animate-fade-in z-50 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700" data-tooltip="Скачать Excel">
+                        <i data-lucide="download" class="w-4 h-4 text-slate-400"></i> Скачать CSV
                     </button>
                 </div>
             </div>
@@ -144,17 +198,21 @@
                 <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-2 flex gap-2 ring-4 ring-white/10 dark:ring-slate-700/50 transition-all duration-300" id="searchContainer">
                     <div class="flex-grow flex items-center px-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl relative group focus-within:ring-2 focus-within:ring-rgsu-600 transition-all">
                         <i data-lucide="search" class="w-5 h-5 text-slate-400 group-focus-within:text-rgsu-600 transition-colors"></i>
-                        <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3.5 outline-none bg-transparent text-sm pr-8 placeholder:text-slate-400 dark:text-white" onfocus="focusSearch()" onblur="setTimeout(blurSearch, 200)">
+                        <input type="text" id="searchInput" placeholder="Профессия, вуз или код..." class="w-full pl-3 py-3.5 outline-none bg-transparent text-sm pr-8 placeholder:text-slate-400 dark:text-white" onfocus="focusSearch()" oninput="handleSearchInput(this.value)">
+                        <span class="hidden md:inline absolute right-3 text-xs text-slate-400 border border-slate-300 rounded px-1.5 py-0.5 pointer-events-none">/</span>
                         <button onclick="clearSearch()" id="clearSearchBtn" class="hidden absolute right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                 </div>
+                <!-- Smart Autocomplete Dropdown -->
                 <div id="searchHistoryDropdown" class="absolute top-full left-2 right-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl mt-2 overflow-hidden hidden z-50 border border-slate-100 dark:border-slate-700 text-left">
-                    <div class="px-4 py-2 text-xs text-slate-400 font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900/50">История поиска</div>
-                    <div id="historyList"></div>
+                    <!-- JS fills this -->
                 </div>
             </div>
             
-            <div id="popularFilters" class="flex flex-wrap justify-center gap-2 mt-8 text-xs relative z-10"></div>
+            <!-- Category Carousel -->
+            <div id="popularFilters" class="flex flex-nowrap overflow-x-auto gap-3 mt-8 pb-4 px-4 justify-start md:justify-center no-scrollbar relative z-10 snap-x">
+                <!-- JS injected -->
+            </div>
         </div>
     </div>
 
@@ -208,8 +266,8 @@
 
                     <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
 
-                    <button onclick="toggleCompactMode()" id="compactToggleBtn" class="p-2 text-slate-400 hover:text-rgsu-700 hover:bg-slate-50 dark:hover:bg-slate-700 dark:hover:text-white rounded-lg transition active:scale-95" title="Компактный вид">
-                        <i data-lucide="align-justify" class="w-5 h-5"></i>
+                    <button onclick="toggleLayout()" id="layoutToggleBtn" class="p-2 text-slate-400 hover:text-rgsu-700 hover:bg-slate-50 dark:hover:bg-slate-700 dark:hover:text-white rounded-lg transition active:scale-95" data-tooltip="Вид: Список/Плитка">
+                        <i data-lucide="layout-grid" class="w-5 h-5"></i>
                     </button>
                     
                     <button onclick="resetAllFilters()" id="globalResetBtn" class="hidden p-2 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition active:scale-95" title="Сбросить всё">
@@ -222,7 +280,7 @@
             <div id="resultsCount" class="hidden"></div>
         </div>
 
-        <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
             <div class="skeleton h-80 rounded-2xl"></div><div class="skeleton h-80 rounded-2xl"></div><div class="skeleton h-80 rounded-2xl"></div>
         </div>
 
@@ -290,7 +348,7 @@
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
         <div class="fixed inset-0 z-10 overflow-y-auto p-4 flex items-center justify-center">
             <div class="relative bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-2xl w-full transform transition-all scale-95 opacity-0 overflow-hidden border border-slate-200 dark:border-slate-700" id="modalPanel">
-                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-600 z-10 transition dark:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 rounded-full bg-white/80 dark:bg-slate-700/80 hover:bg-slate-100 dark:hover:bg-slate-600 z-10 transition dark:text-white no-print"><i data-lucide="x" class="w-5 h-5"></i></button>
                 <div id="modalContent" class="p-8 max-h-[85vh] overflow-y-auto custom-scrollbar"></div>
             </div>
         </div>
@@ -323,7 +381,7 @@
         let filteredPrograms = [];
         let visibleCount = 21;
         let showFavorites = false;
-        let isCompactMode = false;
+        let layoutMode = 'grid'; // 'grid' or 'list'
         let searchHistory = JSON.parse(localStorage.getItem('rgsu_search_history') || '[]');
         let recentlyViewed = JSON.parse(localStorage.getItem('rgsu_recent') || '[]');
         
@@ -346,12 +404,17 @@
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             const savedView = localStorage.getItem('rgsu_view_mode');
-            if(savedView === 'compact') isCompactMode = true;
-            toggleCompactMode(false); 
+            if(savedView === 'list') layoutMode = 'list';
+            updateLayoutIcon();
+
             readURL(); 
             loadData();
             updateFavBadge(); 
             
+            // Offline Detection
+            window.addEventListener('offline', () => showToast('Нет подключения к интернету', 'info'));
+            window.addEventListener('online', () => showToast('Подключение восстановлено'));
+
             document.addEventListener('mousemove', (e) => {
                 const x = e.clientX / window.innerWidth;
                 const y = e.clientY / window.innerHeight;
@@ -359,6 +422,18 @@
                 const blob2 = document.getElementById('heroBlob2');
                 if(blob1) blob1.style.transform = `translate(${x * 30}px, ${y * 30}px) scale(1.1)`;
                 if(blob2) blob2.style.transform = `translate(-${x * 30}px, -${y * 30}px) scale(1.1)`;
+            });
+
+            // Handle browser back button
+            window.addEventListener('popstate', () => {
+                const hash = window.location.hash;
+                if (!hash.startsWith('#program=')) {
+                    document.getElementById('modal').classList.add('hidden');
+                    document.body.style.overflow = '';
+                } else {
+                    const id = parseInt(hash.split('=')[1]);
+                    if(!isNaN(id)) openModal(id, false); // Don't push state again
+                }
             });
 
             if (window.location.hash.startsWith('#program=')) {
@@ -380,25 +455,53 @@
             }, { rootMargin: '100px' });
             const sentinel = document.getElementById('sentinel');
             if(sentinel) observer.observe(sentinel);
+
+            // Hotkeys
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.getElementById('compareModal').classList.add('hidden');
+                    document.getElementById('shortcutsModal').classList.add('hidden');
+                    blurSearch();
+                }
+                if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
+                    e.preventDefault();
+                    document.getElementById('searchInput').focus();
+                }
+                if (e.key === '?' && e.shiftKey) {
+                    document.getElementById('shortcutsModal').classList.remove('hidden');
+                }
+                if (e.key === 'p' && e.ctrlKey) {
+                    // Allow normal print if modal not open
+                    if(!document.getElementById('modal').classList.contains('hidden')) {
+                        e.preventDefault();
+                        window.print();
+                    }
+                }
+            });
         });
 
-        document.getElementById('searchInput').addEventListener('input', (e) => { 
+        // Live Search Input with Debounce/Delay for visual stability
+        function handleSearchInput(val) {
             const btn = document.getElementById('clearSearchBtn');
-            if (e.target.value) btn.classList.remove('hidden'); else btn.classList.add('hidden');
-            updateFilters(); 
-        });
-        
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                saveSearchHistory(e.target.value);
-                document.getElementById('searchInput').blur();
+            if (val) btn.classList.remove('hidden'); else btn.classList.add('hidden');
+            updateFilters();
+            
+            // Live Suggestions
+            if(val.length > 2) {
+                const matches = allPrograms.filter(p => p.title.toLowerCase().includes(val.toLowerCase()) || p.inst.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+                renderSuggestions(matches, val);
+            } else {
+                renderSearchHistory();
             }
-        });
+        }
 
         function focusSearch() {
             document.getElementById('searchOverlay').classList.add('active');
             document.getElementById('searchContainer').classList.add('relative', 'z-50', 'scale-105');
-            renderSearchHistory();
+            const val = document.getElementById('searchInput').value;
+            if(val.length > 2) handleSearchInput(val);
+            else renderSearchHistory();
         }
 
         function blurSearch() {
@@ -423,9 +526,33 @@
                 dropdown.classList.add('hidden');
                 return;
             }
-            list.innerHTML = searchHistory.map(term => `
+            // Add Header
+            dropdown.innerHTML = `<div class="px-4 py-2 text-xs text-slate-400 font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900/50">История поиска</div><div id="historyListContent"></div>`;
+            
+            document.getElementById('historyListContent').innerHTML = searchHistory.map(term => `
                 <div class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 transition" onclick="setSearchFromHistory('${term}')">
                     <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i> ${term}
+                </div>
+            `).join('');
+            dropdown.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function renderSuggestions(matches, query) {
+            const dropdown = document.getElementById('searchHistoryDropdown');
+            if(matches.length === 0) {
+                dropdown.classList.add('hidden');
+                return;
+            }
+            dropdown.innerHTML = `<div class="px-4 py-2 text-xs text-slate-400 font-bold uppercase tracking-wider bg-slate-50 dark:bg-slate-900/50">Результаты</div><div id="suggestionsContent"></div>`;
+            
+            document.getElementById('suggestionsContent').innerHTML = matches.map(p => `
+                <div class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300 transition" onclick="openModal(${p.id})">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                    <div>
+                        <div class="font-bold">${highlight(p.title, query)}</div>
+                        <div class="text-xs text-slate-500">${p.inst}</div>
+                    </div>
                 </div>
             `).join('');
             dropdown.classList.remove('hidden');
@@ -576,7 +703,10 @@
             const popDiv = document.getElementById('popularFilters');
             if(popDiv) {
                 popDiv.innerHTML = topCats.map(c => 
-                    `<button onclick="document.getElementById('searchInput').value='${c}'; updateFilters()" class="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium transition cursor-pointer hover:-translate-y-0.5 active:translate-y-0 duration-200 active:scale-95">${c}</button>`
+                    `<div onclick="document.getElementById('searchInput').value='${c}'; updateFilters()" class="flex-shrink-0 w-32 bg-white dark:bg-slate-800 rounded-xl p-3 cursor-pointer hover:shadow-lg transition border border-slate-100 dark:border-slate-700 flex flex-col items-center text-center gap-2 snap-center group">
+                        <div class="w-10 h-10 rounded-full bg-rgsu-50 dark:bg-slate-700 text-rgsu-600 dark:text-blue-300 flex items-center justify-center group-hover:scale-110 transition"><i data-lucide="${getCatIcon(c)}" class="w-5 h-5"></i></div>
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-200 line-clamp-2">${c}</span>
+                    </div>`
                 ).join('');
             }
 
@@ -724,6 +854,10 @@
             
             if(!grid) return;
 
+            // Apply Layout Class
+            if(layoutMode === 'list') grid.classList.add('layout-list');
+            else grid.classList.remove('layout-list');
+
             const q = filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             
             if (filteredPrograms.length === 0) {
@@ -769,52 +903,53 @@
 
                 const isFav = favorites.includes(p.id);
                 const isCompared = compareList.has(p.id);
-                
-                const descHTML = isCompactMode ? '' : `
-                    <p class="text-xs text-slate-500 dark:text-slate-400 font-medium mb-3 uppercase tracking-wide flex items-center gap-1.5 opacity-80">
-                       ${highlight(p.cat, q)}
-                    </p>
-                `;
-                const paddingClass = isCompactMode ? 'p-4' : 'p-6';
+                const isViewed = recentlyViewed.includes(p.id);
+                const paddingClass = layoutMode === 'list' ? 'p-6' : 'p-6';
                 const delay = Math.min(index * 50, 500); 
                 
                 const avatar = p.icon ? `<i data-lucide="${p.icon}" class="w-5 h-5"></i>` : `<span class="text-lg font-bold">${p.title[0]}</span>`;
 
+                // Layout-specific classes
+                const wrapperClass = layoutMode === 'list' ? 'flex-row items-center gap-6' : 'flex-col';
+                
                 gridHTML += `
-                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl card-hover border border-slate-100 dark:border-slate-700 flex flex-col ${paddingClass} animate-fade-in relative transition-all duration-300 ${p.color}" style="animation-delay: ${delay}ms; opacity: 0;">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex flex-wrap gap-2">
-                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'}">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</span>
-                            ${p.hasBudget ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 flex items-center gap-1.5 relative overflow-hidden"><div class="absolute inset-0 shimmer-bg"></div><i data-lucide="check-circle-2" class="w-3 h-3 relative z-10"></i> <span class="relative z-10">Бюджет</span></span>` : ''}
-                            ${p.isNew ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 relative overflow-hidden"><div class="absolute inset-0 shimmer-bg"></div><span class="relative z-10">New 2025</span></span>` : ''}
-                        </div>
-                        <button onclick="toggleFav(${p.id}, this)" class="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 transition hover:scale-110 p-1 fav-btn-target active:scale-90">
-                            <i data-lucide="heart" class="w-5 h-5 ${isFav ? 'fill-red-500 text-red-500' : ''}"></i>
-                        </button>
-                    </div>
-
-                    <div class="flex-grow cursor-pointer group" onclick="openModal(${p.id})">
-                        <div class="flex justify-between items-start mb-1">
-                             <h3 class="font-bold text-slate-900 dark:text-white text-lg leading-snug group-hover:text-rgsu-700 dark:group-hover:text-blue-400 transition duration-300">${highlight(p.title, q)}</h3>
-                             <div class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-300 shrink-0 ml-3 group-hover:bg-rgsu-50 dark:group-hover:bg-blue-900/30 group-hover:text-rgsu-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                                ${avatar}
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:shadow-xl card-hover border border-slate-100 dark:border-slate-700 flex ${wrapperClass} ${paddingClass} animate-fade-in relative transition-all duration-300 ${p.color} ${isViewed ? 'opacity-90' : ''}" style="animation-delay: ${delay}ms; opacity: 0;">
+                    
+                    <div class="${layoutMode === 'list' ? 'w-full md:w-auto flex-grow' : 'w-full'} flex-grow cursor-pointer group" onclick="openModal(${p.id})">
+                        <div class="flex justify-between items-start mb-2">
+                             <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-300 shrink-0 group-hover:bg-rgsu-50 dark:group-hover:bg-blue-900/30 group-hover:text-rgsu-600 dark:group-hover:text-blue-400 transition-colors duration-300 card-img relative">
+                                    ${avatar}
+                                    ${isViewed ? '<div class="absolute -top-1 -right-1 w-3 h-3 bg-slate-200 dark:bg-slate-600 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center"><div class="w-1 h-1 bg-slate-500 rounded-full"></div></div>' : ''}
+                                </div>
+                                <div>
+                                    <div class="flex flex-wrap gap-2 mb-1">
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${p.level === 'VO' ? 'bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800' : 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'}">${p.level === 'VO' ? 'ВУЗ' : 'Колледж'}</span>
+                                        ${p.hasBudget ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800 flex items-center gap-1 relative overflow-hidden"><div class="absolute inset-0 shimmer-bg"></div><i data-lucide="check-circle-2" class="w-3 h-3 relative z-10"></i> <span class="relative z-10">Бюджет</span></span>` : ''}
+                                        ${p.isNew ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800 relative overflow-hidden"><div class="absolute inset-0 shimmer-bg"></div><span class="relative z-10">New 2025</span></span>` : ''}
+                                    </div>
+                                    <h3 class="font-bold text-slate-900 dark:text-white text-lg leading-snug group-hover:text-rgsu-700 dark:group-hover:text-blue-400 transition duration-300">${highlight(p.title, q)}</h3>
+                                </div>
                              </div>
                         </div>
-                        ${descHTML}
-                        <div class="space-y-1.5">
-                            <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold flex items-start gap-2"><i data-lucide="building-2" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i> ${highlight(p.inst, q)}</p>
-                            <p class="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0"></i> ${p.region}</p>
+                        
+                        <div class="space-y-1 ml-13 pl-13 md:ml-0 md:pl-0 mt-2">
+                            <p class="text-sm text-slate-700 dark:text-slate-300 font-semibold flex items-start gap-2 group/tag" onclick="event.stopPropagation(); document.getElementById('universityInput').value='${p.inst}'; updateFilters();"><i data-lucide="building-2" class="w-4 h-4 text-slate-400 mt-0.5 shrink-0"></i> <span class="hover:text-rgsu-600 hover:underline transition">${highlight(p.inst, q)}</span></p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2 group/tag" onclick="event.stopPropagation(); document.getElementById('regionInput').value='${p.region}'; updateFilters();"><i data-lucide="map-pin" class="w-4 h-4 text-slate-400 shrink-0"></i> <span class="hover:text-rgsu-600 hover:underline transition">${p.region}</span></p>
                         </div>
                     </div>
 
-                    <div class="mt-6 pt-4 border-t border-slate-50 dark:border-slate-700 flex items-center justify-between">
-                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-400 hover:text-rgsu-700 dark:hover:text-blue-400 select-none transition-colors">
-                            <input type="checkbox" class="rounded border-slate-300 dark:border-slate-600 text-rgsu-700 focus:ring-rgsu-600 w-4 h-4 dark:bg-slate-700" ${isCompared ? 'checked' : ''} onchange="toggleCompare(${p.id})">
-                            СРАВНИТЬ
-                        </label>
-                        <button onclick="openModal(${p.id})" class="text-rgsu-600 dark:text-blue-400 hover:text-rgsu-800 dark:hover:text-blue-300 text-sm font-bold flex items-center gap-1 group/btn active:scale-95 transition">
-                            Подробнее <i data-lucide="chevron-right" class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform"></i>
-                        </button>
+                    <div class="${layoutMode === 'list' ? 'flex-col border-l border-slate-100 pl-4 ml-4 hidden md:flex min-w-[140px]' : 'mt-6 pt-4 border-t border-slate-50 dark:border-slate-700 flex items-center justify-between'}">
+                        <div class="flex gap-2 ${layoutMode === 'list' ? 'flex-col w-full' : ''}">
+                            <button onclick="toggleFav(${p.id}, this)" class="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-500 transition hover:scale-110 p-1 fav-btn-target active:scale-90 flex items-center gap-2" data-tooltip="В избранное">
+                                <i data-lucide="heart" class="w-5 h-5 ${isFav ? 'fill-red-500 text-red-500' : ''}"></i> ${layoutMode === 'list' ? '<span class="text-xs font-bold text-slate-500">В избранное</span>' : ''}
+                            </button>
+                            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-400 hover:text-rgsu-700 dark:hover:text-blue-400 select-none transition-colors">
+                                <input type="checkbox" class="rounded border-slate-300 dark:border-slate-600 text-rgsu-700 focus:ring-rgsu-600 w-4 h-4 dark:bg-slate-700" ${isCompared ? 'checked' : ''} onchange="toggleCompare(${p.id})">
+                                СРАВНИТЬ
+                            </label>
+                        </div>
+                        ${layoutMode !== 'list' ? `<button onclick="openModal(${p.id})" class="text-rgsu-600 dark:text-blue-400 hover:text-rgsu-800 dark:hover:text-blue-300 text-sm font-bold flex items-center gap-1 group/btn active:scale-95 transition">Подробнее <i data-lucide="chevron-right" class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform"></i></button>` : ''}
                     </div>
                 </div>
             `;
@@ -867,6 +1002,9 @@
             const index = favorites.indexOf(id);
             if (index === -1) {
                 favorites.push(id);
+                // Confetti only if adding
+                const rect = btn.getBoundingClientRect();
+                createConfetti(rect.left + rect.width/2, rect.top + rect.height/2);
                 showToast('Добавлено в избранное');
                 flyToFav(btn);
             } else {
@@ -886,6 +1024,7 @@
             }
         }
 
+        // Animation: Fly Heart
         function flyToFav(startBtn) {
             const heart = startBtn.querySelector('svg').cloneNode(true);
             const startRect = startBtn.getBoundingClientRect();
@@ -911,6 +1050,28 @@
             
             document.body.appendChild(heart);
             setTimeout(() => heart.remove(), 800);
+        }
+        
+        function createConfetti(x, y) {
+            for(let i=0; i<10; i++) {
+                const part = document.createElement('div');
+                part.className = 'fixed w-2 h-2 rounded-full z-[100] pointer-events-none';
+                part.style.backgroundColor = ['#EF4444', '#3B82F6', '#F59E0B', '#10B981'][Math.floor(Math.random()*4)];
+                part.style.left = x + 'px';
+                part.style.top = y + 'px';
+                
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 30 + Math.random() * 50;
+                const tx = Math.cos(angle) * dist + 'px';
+                const ty = Math.sin(angle) * dist + 'px';
+                
+                part.style.setProperty('--x', tx);
+                part.style.setProperty('--y', ty);
+                part.style.animation = 'confetti 0.6s ease-out forwards';
+                
+                document.body.appendChild(part);
+                setTimeout(() => part.remove(), 600);
+            }
         }
 
         function toggleCompare(id) {
@@ -949,11 +1110,39 @@
         }
         
         function exportFavorites() {
+            // Placeholder text copy
             const items = allPrograms.filter(p => favorites.includes(p.id));
             if(items.length === 0) return;
             
             const text = items.map(p => `- ${p.title} (${p.level}) в ${p.inst}. ${p.region}.`).join('\n');
             navigator.clipboard.writeText(text).then(() => showToast('Список скопирован!'));
+        }
+        
+        function exportFavoritesCSV() {
+            const items = allPrograms.filter(p => favorites.includes(p.id));
+            if(items.length === 0) return;
+            
+            // Generate CSV
+            const headers = ["Название", "ВУЗ", "Регион", "Уровень", "Бюджет", "Ссылка"];
+            const rows = items.map(p => [
+                `"${p.title.replace(/"/g, '""')}"`,
+                `"${p.inst.replace(/"/g, '""')}"`,
+                `"${p.region}"`,
+                p.level === 'VO' ? 'ВУЗ' : 'СПО',
+                `"${p.places}"`,
+                p.url
+            ]);
+            
+            const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "rgsu_favorites.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Файл скачан');
         }
 
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -1005,14 +1194,30 @@
         }
 
         function toggleCompactMode(render = true) {
-            if (render) isCompactMode = !isCompactMode;
-            localStorage.setItem('rgsu_view_mode', isCompactMode ? 'compact' : 'full');
-            const btn = document.getElementById('compactToggleBtn');
-            if(btn) {
-                if (isCompactMode) btn.classList.add('text-rgsu-700', 'bg-slate-100', 'dark:bg-slate-700', 'dark:text-white');
-                else btn.classList.remove('text-rgsu-700', 'bg-slate-100', 'dark:bg-slate-700', 'dark:text-white');
+            if (render) toggleLayout(); // Redirect legacy call
+        }
+        
+        function toggleLayout() {
+            layoutMode = layoutMode === 'grid' ? 'list' : 'grid';
+            localStorage.setItem('rgsu_view_mode', layoutMode);
+            updateLayoutIcon();
+            renderUI();
+        }
+        
+        function updateLayoutIcon() {
+            const btn = document.getElementById('layoutToggleBtn');
+            if(!btn) return;
+            const icon = layoutMode === 'grid' ? 'layout-grid' : 'list';
+            btn.innerHTML = `<i data-lucide="${icon}" class="w-5 h-5"></i>`;
+            
+            if(layoutMode === 'list') {
+                btn.classList.add('bg-slate-100', 'text-rgsu-900', 'dark:bg-slate-700', 'dark:text-white');
+                btn.classList.remove('text-slate-400');
+            } else {
+                btn.classList.remove('bg-slate-100', 'text-rgsu-900', 'dark:bg-slate-700', 'dark:text-white');
+                btn.classList.add('text-slate-400');
             }
-            if(render) renderUI();
+            lucide.createIcons();
         }
 
         function getCatColor(cat) {
@@ -1032,13 +1237,16 @@
         }
 
         // === MODALS ===
-        function openModal(id) {
+        function openModal(id, pushHistory = true) {
             const p = allPrograms.find(x => x.id === id);
             if (!p) return;
-            try { 
-                window.location.hash = `program=${id}`; 
-                document.title = `${p.title} - РГСУ Портал`;
-            } catch (e) {}
+            
+            if(pushHistory) {
+                try { 
+                    history.pushState({modalId: id}, '', `#program=${id}`);
+                    document.title = `${p.title} - РГСУ Портал`;
+                } catch (e) {}
+            }
             
             addToRecent(id);
             const isFav = favorites.includes(p.id);
@@ -1051,7 +1259,7 @@
             let similarHTML = '';
             if(similar.length > 0) {
                 similarHTML = `
-                    <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700">
+                    <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-700 no-print">
                         <h4 class="font-bold text-slate-800 dark:text-white mb-4">Похожие программы</h4>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             ${similar.map(s => `
@@ -1068,7 +1276,7 @@
             document.getElementById('modalContent').innerHTML = `
                 <div class="flex justify-between items-start mb-8">
                     <div class="flex items-start gap-5">
-                        <div class="w-16 h-16 bg-gradient-to-br from-rgsu-50 to-white dark:from-slate-700 dark:to-slate-800 border border-rgsu-100 dark:border-slate-600 rounded-2xl flex items-center justify-center text-rgsu-700 dark:text-blue-300 shrink-0 shadow-lg shadow-rgsu-900/5">
+                        <div class="w-16 h-16 bg-gradient-to-br from-rgsu-50 to-white dark:from-slate-700 dark:to-slate-800 border border-rgsu-100 dark:border-slate-600 rounded-2xl flex items-center justify-center text-rgsu-700 dark:text-blue-300 shrink-0 shadow-lg shadow-rgsu-900/5 no-print">
                             <i data-lucide="${p.icon}" class="w-8 h-8"></i>
                         </div>
                         <div>
@@ -1084,6 +1292,7 @@
                             <p class="text-rgsu-700 dark:text-blue-400 font-bold text-lg flex items-center gap-2"><i data-lucide="building-2" class="w-5 h-5"></i> ${p.inst}</p>
                         </div>
                     </div>
+                    <button class="no-print p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400" onclick="generateQR('${window.location.href}')" data-tooltip="QR-код"><i data-lucide="qr-code" class="w-5 h-5"></i></button>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                     <div class="bg-blue-50/50 dark:bg-slate-900 p-5 rounded-2xl border border-blue-100 dark:border-slate-600">
@@ -1101,18 +1310,22 @@
                     <p class="leading-relaxed text-base">${p.desc}</p>
                 </div>
                 
+                <div id="qrCodeContainer" class="hidden flex justify-center mb-6 no-print">
+                    <!-- QR will be injected here -->
+                </div>
+
                 ${similarHTML}
 
-                <div class="flex gap-3 sticky bottom-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm pt-4 pb-2 border-t border-slate-100 dark:border-slate-700 items-center -mx-4 px-4 sm:mx-0 sm:px-0">
+                <div class="flex gap-3 sticky bottom-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm pt-4 pb-2 border-t border-slate-100 dark:border-slate-700 items-center -mx-4 px-4 sm:mx-0 sm:px-0 no-print">
                     <a href="${p.url}" target="_blank" class="flex-grow text-center bg-rgsu-700 hover:bg-rgsu-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-4 rounded-xl font-bold transition shadow-lg flex justify-center items-center gap-2 active:scale-[0.98]">
                         Перейти на сайт <i data-lucide="external-link" class="w-4 h-4"></i>
                     </a>
                     
-                    <button onclick="shareProgram(${p.id}, '${p.title}')" class="w-14 h-14 flex items-center justify-center border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition active:scale-95">
+                    <button onclick="shareProgram(${p.id}, '${p.title}')" class="w-14 h-14 flex items-center justify-center border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition active:scale-95" data-tooltip="Поделиться">
                         <i data-lucide="share-2" class="w-6 h-6 text-slate-400"></i>
                     </button>
                     
-                    <button onclick="toggleFav(${p.id}, this)" class="w-14 h-14 flex items-center justify-center border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition active:scale-95">
+                    <button onclick="toggleFav(${p.id}, this)" class="w-14 h-14 flex items-center justify-center border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition active:scale-95" data-tooltip="В избранное">
                         <i data-lucide="heart" class="w-6 h-6 ${favorites.includes(p.id) ? 'fill-red-500 text-red-500' : 'text-slate-400'}"></i>
                     </button>
                 </div>
@@ -1121,6 +1334,16 @@
             m.classList.remove('hidden');
             setTimeout(() => { m.querySelector('div').classList.remove('opacity-0'); document.getElementById('modalPanel').classList.remove('scale-95', 'opacity-0'); document.getElementById('modalPanel').classList.add('scale-100', 'opacity-100'); }, 10);
             lucide.createIcons();
+        }
+
+        function generateQR(url) {
+            const container = document.getElementById('qrCodeContainer');
+            if(!container.classList.contains('hidden')) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}" alt="QR Code" class="rounded-xl border border-slate-200 p-2">`;
+            container.classList.remove('hidden');
         }
 
         function shareProgram(id, title) {
@@ -1142,10 +1365,7 @@
             document.getElementById('modalPanel').classList.add('scale-95', 'opacity-0');
             setTimeout(() => { 
                 m.classList.add('hidden'); 
-                try{
-                    window.location.hash='';
-                    document.title = 'РГСУ | Образовательный портал';
-                }catch(e){} 
+                // Don't reset hash if navigating back via history to avoid loops
             }, 200);
         }
 
